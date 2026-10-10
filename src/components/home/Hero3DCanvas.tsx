@@ -1,508 +1,446 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Sparkles } from "lucide-react";
 
 export function Hero3DCanvas() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
 
     let destroyed = false;
     let animId: number;
 
-    // Check dimensions safely
     const getDims = () => {
-      const rect = canvas.getBoundingClientRect();
-      const w = Math.max(Math.floor(rect.width || canvas.clientWidth || 520), 300);
-      const h = Math.max(Math.floor(rect.height || canvas.clientHeight || 560), 380);
+      const rect = container.getBoundingClientRect();
+      const w = Math.max(Math.floor(rect.width || 540), 280);
+      const h = Math.max(Math.floor(rect.height || 580), 360);
       return { w, h };
     };
 
-    // Shared interaction variables
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetRotX = 0;
-    let targetRotY = 0;
-    let scrollY = 0;
+    const { w, h } = getDims();
 
-    const onMouseMove = (e: MouseEvent) => {
-      if (destroyed || !canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const rawX = (e.clientX - rect.left) / rect.width - 0.5;
-      const rawY = (e.clientY - rect.top) / rect.height - 0.5;
-      if (!Number.isNaN(rawX) && !Number.isNaN(rawY)) {
-        mouseX = Math.max(-1.5, Math.min(1.5, rawX * 2.2));
-        mouseY = Math.max(-1.5, Math.min(1.5, rawY * 2.2));
-      }
-    };
-
-    const onScroll = () => {
-      if (destroyed) return;
-      const sy = window.scrollY || document.documentElement.scrollTop || 0;
-      scrollY = Number.isNaN(sy) ? 0 : sy;
-    };
-
-    window.addEventListener("mousemove", onMouseMove, { passive: true });
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    // =========================================================
-    // Attempt 1: True Hardware-Accelerated Three.js WebGL
-    // =========================================================
+    // 1. Transparent WebGL Renderer - 100% Seamless with Hero Background
     let renderer: THREE.WebGLRenderer | null = null;
-    let scene: THREE.Scene | null = null;
-    let camera: THREE.PerspectiveCamera | null = null;
-    const geometriesToDispose: THREE.BufferGeometry[] = [];
-    const materialsToDispose: THREE.Material[] = [];
-
     try {
       renderer = new THREE.WebGLRenderer({
         canvas,
         antialias: true,
         alpha: true,
-        powerPreference: "default",
+        powerPreference: "high-performance",
       });
-      renderer.setPixelRatio(Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2));
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.15;
-      
-      const { w, h } = getDims();
+      renderer.setClearColor(0x000000, 0); // Pure transparency
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(w, h, false);
-
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 100);
-      camera.position.set(0, 0, 7.4);
-
-      // Root Group
-      const mainGroup = new THREE.Group();
-      scene.add(mainGroup);
-
-      // Tooth Group
-      const toothGroup = new THREE.Group();
-      mainGroup.add(toothGroup);
-
-      // 1. Sculpted Molar Crown Geometry with anatomical cusps
-      const crownGeo = new THREE.CylinderGeometry(1.35, 1.05, 1.45, 48, 24, false);
-      const pos = crownGeo.attributes.position;
-      const v = new THREE.Vector3();
-
-      for (let i = 0; i < pos.count; i++) {
-        v.fromBufferAttribute(pos, i);
-        const y = v.y;
-        const angle = Math.atan2(v.z, v.x);
-        const radius = Math.sqrt(v.x * v.x + v.z * v.z);
-
-        if (y > 0.3) {
-          const topFactor = (y - 0.3) / 0.42;
-          const cuspWave = Math.sin(angle * 2) * 0.26 * topFactor;
-          const fissure = Math.exp(-radius * radius * 3.8) * 0.3 * topFactor;
-          v.y += cuspWave - fissure;
-          v.x *= 1.0 + Math.sin(angle * 4) * 0.04;
-          v.z *= 1.0 + Math.cos(angle * 4) * 0.04;
-        } else if (y < -0.2) {
-          const neckFactor = (-y - 0.2) / 0.52;
-          v.x *= 1.0 - neckFactor * 0.24;
-          v.z *= 1.0 - neckFactor * 0.24;
-        }
-        pos.setXYZ(i, v.x, v.y, v.z);
-      }
-      crownGeo.computeVertexNormals();
-      geometriesToDispose.push(crownGeo);
-
-      // Luxury Dental Porcelain Enamel Material with rich depth & contrast
-      const enamelMaterial = new THREE.MeshStandardMaterial({
-        color: 0xf5f0e8,
-        roughness: 0.22,
-        metalness: 0.12,
-      });
-      materialsToDispose.push(enamelMaterial);
-
-      const crownMesh = new THREE.Mesh(crownGeo, enamelMaterial);
-      crownMesh.position.y = 0.5;
-      toothGroup.add(crownMesh);
-
-      // Gold / Rose-Gold Cervical Ring (Digital implant luxury abutment collar)
-      const collarGeo = new THREE.TorusGeometry(1.02, 0.045, 16, 48);
-      geometriesToDispose.push(collarGeo);
-      const collarMaterial = new THREE.MeshStandardMaterial({
-        color: 0xd8ae98,
-        metalness: 0.92,
-        roughness: 0.2,
-      });
-      materialsToDispose.push(collarMaterial);
-      const collarMesh = new THREE.Mesh(collarGeo, collarMaterial);
-      collarMesh.rotation.x = Math.PI / 2;
-      collarMesh.position.y = -0.22;
-      toothGroup.add(collarMesh);
-
-      // Anatomical Dual Roots
-      const root1Geo = new THREE.ConeGeometry(0.52, 1.65, 32, 16);
-      const r1Pos = root1Geo.attributes.position;
-      for (let i = 0; i < r1Pos.count; i++) {
-        v.fromBufferAttribute(r1Pos, i);
-        v.x += (v.y - 0.8) * 0.14;
-        r1Pos.setXYZ(i, v.x, v.y, v.z);
-      }
-      root1Geo.computeVertexNormals();
-      geometriesToDispose.push(root1Geo);
-      const root1Mesh = new THREE.Mesh(root1Geo, enamelMaterial);
-      root1Mesh.rotation.z = Math.PI;
-      root1Mesh.position.set(-0.52, -0.75, 0.08);
-      root1Mesh.rotation.y = 0.25;
-      toothGroup.add(root1Mesh);
-
-      const root2Geo = new THREE.ConeGeometry(0.5, 1.55, 32, 16);
-      const r2Pos = root2Geo.attributes.position;
-      for (let i = 0; i < r2Pos.count; i++) {
-        v.fromBufferAttribute(r2Pos, i);
-        v.x -= (v.y - 0.8) * 0.12;
-        r2Pos.setXYZ(i, v.x, v.y, v.z);
-      }
-      root2Geo.computeVertexNormals();
-      geometriesToDispose.push(root2Geo);
-      const root2Mesh = new THREE.Mesh(root2Geo, enamelMaterial);
-      root2Mesh.rotation.z = Math.PI;
-      root2Mesh.position.set(0.52, -0.7, -0.08);
-      root2Mesh.rotation.y = -0.25;
-      toothGroup.add(root2Mesh);
-
-      // 2. High-End Metallic Orbital Rings
-      const ring1Geo = new THREE.TorusGeometry(2.35, 0.026, 16, 96);
-      geometriesToDispose.push(ring1Geo);
-      const ring1Material = new THREE.MeshStandardMaterial({
-        color: 0xd8ae98,
-        metalness: 0.95,
-        roughness: 0.18,
-      });
-      materialsToDispose.push(ring1Material);
-      const ring1 = new THREE.Mesh(ring1Geo, ring1Material);
-      ring1.rotation.x = Math.PI / 3;
-      ring1.rotation.y = Math.PI / 6;
-      mainGroup.add(ring1);
-
-      const ring2Geo = new THREE.TorusGeometry(2.75, 0.02, 16, 96);
-      geometriesToDispose.push(ring2Geo);
-      const ring2Material = new THREE.MeshStandardMaterial({
-        color: 0xa09b7c,
-        metalness: 0.9,
-        roughness: 0.22,
-      });
-      materialsToDispose.push(ring2Material);
-      const ring2 = new THREE.Mesh(ring2Geo, ring2Material);
-      ring2.rotation.x = -Math.PI / 4;
-      ring2.rotation.z = Math.PI / 5;
-      mainGroup.add(ring2);
-
-      // 3. Ethereal Warm Luminous Particle Field
-      const particleCount = 200;
-      const particleGeo = new THREE.BufferGeometry();
-      const particleCoords = new Float32Array(particleCount * 3);
-      const particleColors = new Float32Array(particleCount * 3);
-      const c1 = new THREE.Color("#A09B7C");
-      const c2 = new THREE.Color("#D8AE98");
-
-      for (let i = 0; i < particleCount; i++) {
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(Math.random() * 2 - 1);
-        const rad = 2.2 + Math.random() * 2.6;
-
-        particleCoords[i * 3] = rad * Math.sin(phi) * Math.cos(theta);
-        particleCoords[i * 3 + 1] = rad * Math.sin(phi) * Math.sin(theta);
-        particleCoords[i * 3 + 2] = rad * Math.cos(phi);
-
-        const mixed = Math.random() > 0.5 ? c1 : c2;
-        particleColors[i * 3] = mixed.r;
-        particleColors[i * 3 + 1] = mixed.g;
-        particleColors[i * 3 + 2] = mixed.b;
-      }
-
-      particleGeo.setAttribute("position", new THREE.BufferAttribute(particleCoords, 3));
-      particleGeo.setAttribute("color", new THREE.BufferAttribute(particleColors, 3));
-      geometriesToDispose.push(particleGeo);
-
-      const particleMat = new THREE.PointsMaterial({
-        size: 0.07,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.8,
-      });
-      materialsToDispose.push(particleMat);
-
-      const particles = new THREE.Points(particleGeo, particleMat);
-      mainGroup.add(particles);
-
-      // 4. Studio Lighting Rig for Rich Contrast
-      const keyLight = new THREE.DirectionalLight(0xfff5ea, 3.2);
-      keyLight.position.set(4, 5, 4.5);
-      scene.add(keyLight);
-
-      const fillLight = new THREE.DirectionalLight(0xf4e2d4, 2.0);
-      fillLight.position.set(-4, -2, 3);
-      scene.add(fillLight);
-
-      const rimLight = new THREE.DirectionalLight(0xa09b7c, 3.6);
-      rimLight.position.set(0, 4, -4);
-      scene.add(rimLight);
-
-      const bottomLight = new THREE.DirectionalLight(0xd8ae98, 1.4);
-      bottomLight.position.set(0, -4, 2);
-      scene.add(bottomLight);
-
-      const ambientLight = new THREE.AmbientLight(0x504838, 1.4);
-      scene.add(ambientLight);
-
-      // Handle Resizing
-      const onResize = () => {
-        if (destroyed || !renderer || !camera || !canvas) return;
-        const { w, h } = getDims();
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, h, false);
-      };
-
-      window.addEventListener("resize", onResize);
-
-      // Animation Loop for Three.js
-      const clock = new THREE.Clock();
-
-      const animateWebGL = () => {
-        if (destroyed || !renderer || !scene || !camera) return;
-        animId = requestAnimationFrame(animateWebGL);
-
-        const elapsedTime = clock.getElapsedTime();
-
-        // Mouse tracking interpolation with NaN protection
-        const validMouseX = Number.isNaN(mouseX) ? 0 : mouseX;
-        const validMouseY = Number.isNaN(mouseY) ? 0 : mouseY;
-        targetRotY += (validMouseX * 0.7 - targetRotY) * 0.05;
-        targetRotX += (validMouseY * 0.45 - targetRotX) * 0.05;
-
-        // Scroll progression: rotates 3D model gracefully with mouse scroll
-        const validScroll = Number.isNaN(scrollY) ? 0 : scrollY;
-        const scrollRotation = validScroll * 0.0032;
-        const scrollOffsetY = Math.min(validScroll * 0.0028, 2.2);
-
-        // Model movement
-        toothGroup.rotation.y = elapsedTime * 0.28 + targetRotY + scrollRotation;
-        toothGroup.rotation.x = Math.sin(elapsedTime * 0.5) * 0.07 + targetRotX;
-        toothGroup.position.y = Math.sin(elapsedTime * 0.85) * 0.1 - scrollOffsetY;
-
-        ring1.rotation.z = elapsedTime * 0.16 + scrollRotation * 0.5;
-        ring2.rotation.z = -elapsedTime * 0.14 - scrollRotation * 0.3;
-        particles.rotation.y = elapsedTime * 0.05 + scrollRotation * 0.2;
-
-        renderer.render(scene, camera);
-      };
-
-      animateWebGL();
-
-      return () => {
-        destroyed = true;
-        cancelAnimationFrame(animId);
-        window.removeEventListener("mousemove", onMouseMove);
-        window.removeEventListener("scroll", onScroll);
-        window.removeEventListener("resize", onResize);
-
-        geometriesToDispose.forEach((g) => g.dispose());
-        materialsToDispose.forEach((m) => m.dispose());
-        renderer?.dispose();
-      };
-
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.25;
     } catch {
-      // If WebGL fails to create context, proceed seamlessly to fallback
-      renderer = null;
+      return;
     }
 
+    // 2. Scene & Camera
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+    camera.position.set(0, 0.1, 7.8);
+
+    // Root Group for interactive mouse / touch parallax
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    // Tooth Centered Group (Contains molar-tooth.glb)
+    const toothGroup = new THREE.Group();
+    rootGroup.add(toothGroup);
+
+    // Environment Lighting Rig
+    const ambientLight = new THREE.AmbientLight(0xFFFBF5, 1.9);
+    scene.add(ambientLight);
+
+    // Key Light (Warm ivory sunlight)
+    const keyLight = new THREE.DirectionalLight(0xFFF5E6, 2.5);
+    keyLight.position.set(5, 7, 5);
+    scene.add(keyLight);
+
+    // Fill Light (Soft sky reflection)
+    const fillLight = new THREE.DirectionalLight(0xE8F0FE, 1.5);
+    fillLight.position.set(-5, 3, 3);
+    scene.add(fillLight);
+
+    // Back Rim Light (Warm rose gold luster for tooth silhouette)
+    const rimLight = new THREE.DirectionalLight(0xD8AE98, 2.2);
+    rimLight.position.set(0, -3, -6);
+    scene.add(rimLight);
+
+    // Top Light for Occlusal Cusps
+    const topLight = new THREE.PointLight(0xFFFFFF, 1.4, 10);
+    topLight.position.set(0, 4, 2);
+    scene.add(topLight);
+
     // =========================================================
-    // Attempt 2: High-Fidelity Procedural 2.5D Canvas Engine
-    // (Active if WebGL is disabled or restricted in iframe)
+    // 3. Luxurious 3D Orbit Rings (طراحی مداری قبلی)
     // =========================================================
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ringGroup = new THREE.Group();
+    rootGroup.add(ringGroup);
 
-    let t = 0;
+    // Ring 1: Metallic Rose Gold
+    const ring1Geo = new THREE.TorusGeometry(2.35, 0.024, 20, 128);
+    const ring1Mat = new THREE.MeshStandardMaterial({
+      color: 0xD8AE98,
+      metalness: 0.88,
+      roughness: 0.22,
+    });
+    const ring1Mesh = new THREE.Mesh(ring1Geo, ring1Mat);
+    ring1Mesh.rotation.x = Math.PI / 3.8;
+    ring1Mesh.rotation.y = Math.PI / 5;
+    ringGroup.add(ring1Mesh);
 
-    const render2D = () => {
-      if (destroyed) return;
-      animId = requestAnimationFrame(render2D);
-      t += 0.025;
+    // Ring 2: Metallic Khaki / Olive Gold
+    const ring2Geo = new THREE.TorusGeometry(2.72, 0.020, 20, 128);
+    const ring2Mat = new THREE.MeshStandardMaterial({
+      color: 0xA09B7C,
+      metalness: 0.84,
+      roughness: 0.28,
+    });
+    const ring2Mesh = new THREE.Mesh(ring2Geo, ring2Mat);
+    ring2Mesh.rotation.x = -Math.PI / 3.2;
+    ring2Mesh.rotation.z = Math.PI / 4.2;
+    ringGroup.add(ring2Mesh);
 
-      const { w, h } = getDims();
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
+    // Subtle Satellite Sphere on Ring 1
+    const satGeo = new THREE.SphereGeometry(0.065, 16, 16);
+    const satMat = new THREE.MeshStandardMaterial({
+      color: 0xD8AE98,
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: 0xD8AE98,
+      emissiveIntensity: 0.35,
+    });
+    const satMesh = new THREE.Mesh(satGeo, satMat);
+    ring1Mesh.add(satMesh);
+    satMesh.position.set(2.35, 0, 0);
+
+    // Satellite Sphere on Ring 2
+    const sat2Geo = new THREE.SphereGeometry(0.055, 16, 16);
+    const sat2Mat = new THREE.MeshStandardMaterial({
+      color: 0xA09B7C,
+      metalness: 0.95,
+      roughness: 0.15,
+      emissive: 0xA09B7C,
+      emissiveIntensity: 0.3,
+    });
+    const sat2Mesh = new THREE.Mesh(sat2Geo, sat2Mat);
+    ring2Mesh.add(sat2Mesh);
+    sat2Mesh.position.set(2.72, 0, 0);
+
+    // =========================================================
+    // 4. Floating Ambient Luminous Particles (ذرات نورانی معلق)
+    // =========================================================
+    const particleCount = 36;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleSeeds: { radius: number; speed: number; angle: number; y: number }[] = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const radius = 1.6 + Math.random() * 1.8;
+      const angle = (i / particleCount) * Math.PI * 2 + Math.random() * 0.5;
+      const py = (Math.random() - 0.5) * 3.4;
+      const speed = (0.2 + Math.random() * 0.35) * (Math.random() > 0.5 ? 1 : -1);
+
+      particlePositions[i * 3] = Math.cos(angle) * radius;
+      particlePositions[i * 3 + 1] = py;
+      particlePositions[i * 3 + 2] = Math.sin(angle) * radius;
+
+      particleSeeds.push({ radius, speed, angle, y: py });
+    }
+
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: 0xD8AE98,
+      size: 0.07,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending,
+    });
+    const particles = new THREE.Points(particleGeo, particleMat);
+    rootGroup.add(particles);
+
+    // Soft Ambient Floor Shadow Disc
+    const shadowGeo = new THREE.PlaneGeometry(3.6, 3.6);
+    const shadowCanvas = document.createElement("canvas");
+    shadowCanvas.width = 128;
+    shadowCanvas.height = 128;
+    const sCtx = shadowCanvas.getContext("2d");
+    if (sCtx) {
+      const grad = sCtx.createRadialGradient(64, 64, 0, 64, 64, 60);
+      grad.addColorStop(0, "rgba(48, 42, 33, 0.16)");
+      grad.addColorStop(0.4, "rgba(160, 155, 124, 0.08)");
+      grad.addColorStop(1, "rgba(247, 244, 238, 0)");
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, 128, 128);
+    }
+    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: shadowTexture,
+      transparent: true,
+      depthWrite: false,
+    });
+    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+    shadowMesh.rotation.x = -Math.PI / 2;
+    shadowMesh.position.y = -2.1;
+    rootGroup.add(shadowMesh);
+
+    // =========================================================
+    // 5. Load Molar Tooth (molar-tooth.glb) at Center
+    // =========================================================
+    const loader = new GLTFLoader();
+    loader.load(
+      "/models/molar-tooth.glb",
+      (gltf) => {
+        if (destroyed) return;
+
+        const tooth = gltf.scene;
+
+        // Auto-fit & Auto-center directly within the orbit rings
+        const box = new THREE.Box3().setFromObject(tooth);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+        const targetSize = 3.35; // Harmonious size inside orbit rings
+        const scale = targetSize / maxDim;
+        tooth.scale.setScalar(scale);
+
+        tooth.position.x = -center.x * scale;
+        tooth.position.y = -center.y * scale;
+        tooth.position.z = -center.z * scale;
+
+        // Optimize materials for dental porcelain enamel sheen
+        tooth.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            const mesh = child as THREE.Mesh;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            if (mesh.material) {
+              if (Array.isArray(mesh.material)) {
+                mesh.material.forEach((m) => {
+                  m.needsUpdate = true;
+                });
+              } else {
+                mesh.material.needsUpdate = true;
+              }
+            }
+          }
+        });
+
+        toothGroup.add(tooth);
+        toothGroup.rotation.x = 0.12;
+        toothGroup.rotation.y = -0.28;
+
+        setIsLoaded(true);
+      },
+      undefined,
+      (err) => {
+        console.error("Error loading molar-tooth.glb:", err);
       }
+    );
 
-      ctx.clearRect(0, 0, w, h);
+    // =========================================================
+    // 6. Natural Interactive Drag & Mouse Parallax
+    // =========================================================
+    let isDragging = false;
+    let prevMouseX = 0;
+    let prevMouseY = 0;
+    let dragVelocityX = 0;
+    let dragVelocityY = 0;
+    let mouseParallaxX = 0;
+    let mouseParallaxY = 0;
 
-      const validMouseX = Number.isNaN(mouseX) ? 0 : mouseX;
-      const validMouseY = Number.isNaN(mouseY) ? 0 : mouseY;
-      const validScroll = Number.isNaN(scrollY) ? 0 : scrollY;
-
-      const cx = w / 2 + validMouseX * 28;
-      const cy = h / 2 + Math.sin(t * 0.8) * 12 + validMouseY * 20 - Math.min(validScroll * 0.15, 60);
-
-      // 1. Soft Ambient Radial Glow
-      const ambientGrad = ctx.createRadialGradient(cx, cy, 20, cx, cy, 210);
-      ambientGrad.addColorStop(0, "rgba(216, 174, 152, 0.45)");
-      ambientGrad.addColorStop(0.45, "rgba(160, 155, 124, 0.22)");
-      ambientGrad.addColorStop(1, "rgba(160, 155, 124, 0)");
-      ctx.fillStyle = ambientGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 210, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. Metallic Orbit Ring 1 (Rose Gold)
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(t * 0.18 + validScroll * 0.002);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 160, 52, Math.PI / 4, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(216, 174, 152, 0.85)";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.restore();
-
-      // 3. Metallic Orbit Ring 2 (Olive Khaki)
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(-t * 0.14 - validScroll * 0.0015);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 185, 44, -Math.PI / 3, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(160, 155, 124, 0.75)";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.restore();
-
-      // 4. Floating Warm Luminous Particles
-      for (let i = 0; i < 24; i++) {
-        const pAngle = t * 0.35 + (i * Math.PI * 2) / 24;
-        const pRad = 120 + Math.sin(t * 1.2 + i) * 32;
-        const px = cx + Math.cos(pAngle) * pRad;
-        const py = cy + Math.sin(pAngle) * (pRad * 0.55);
-
-        ctx.fillStyle = i % 2 === 0 ? "rgba(216, 174, 152, 0.9)" : "rgba(160, 155, 124, 0.9)";
-        ctx.beginPath();
-        ctx.arc(px, py, 2.5 + Math.sin(t * 2 + i) * 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 5. 3D-Shaded Anatomical Tooth Sculpture
-      ctx.save();
-      ctx.translate(cx, cy);
-
-      // Floor Drop Shadow
-      ctx.fillStyle = "rgba(48, 42, 33, 0.1)";
-      ctx.beginPath();
-      ctx.ellipse(0, 105, 75, 18, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Tooth Roots
-      const rootGrad = ctx.createLinearGradient(0, 0, 0, 95);
-      rootGrad.addColorStop(0, "#FCFAF6");
-      rootGrad.addColorStop(1, "#D6CFBD");
-      ctx.fillStyle = rootGrad;
-
-      // Mesial Root
-      ctx.beginPath();
-      ctx.moveTo(-36, 12);
-      ctx.quadraticCurveTo(-48, 65, -24, 92);
-      ctx.quadraticCurveTo(-15, 65, -10, 16);
-      ctx.closePath();
-      ctx.fill();
-
-      // Distal Root
-      ctx.beginPath();
-      ctx.moveTo(36, 12);
-      ctx.quadraticCurveTo(48, 65, 24, 92);
-      ctx.quadraticCurveTo(15, 65, 10, 16);
-      ctx.closePath();
-      ctx.fill();
-
-      // Gold Abutment Collar Accent
-      ctx.strokeStyle = "rgba(216, 174, 152, 0.95)";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.ellipse(0, 16, 42, 10, 0, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Tooth Crown
-      const crownGrad = ctx.createLinearGradient(-45, -75, 55, 25);
-      crownGrad.addColorStop(0, "#FFFFFF");
-      crownGrad.addColorStop(0.35, "#FAF7F0");
-      crownGrad.addColorStop(0.75, "#E8E2D5");
-      crownGrad.addColorStop(1, "#CCC5B2");
-      ctx.fillStyle = crownGrad;
-
-      ctx.beginPath();
-      ctx.moveTo(-54, -20);
-      // Left cusp
-      ctx.bezierCurveTo(-62, -70, -28, -80, -16, -65);
-      // Central fissure
-      ctx.bezierCurveTo(-6, -55, 6, -55, 16, -65);
-      // Right cusp
-      ctx.bezierCurveTo(28, -80, 62, -70, 54, -20);
-      // Bottom contour
-      ctx.bezierCurveTo(52, 22, 26, 28, 0, 22);
-      ctx.bezierCurveTo(-26, 28, -52, 22, -54, -20);
-      ctx.closePath();
-      ctx.fill();
-
-      // Enamel Specular Highlights
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.arc(-22, -48, 16, 0.2, Math.PI * 0.9);
-      ctx.stroke();
-
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(22, -48, 14, 0.2, Math.PI * 0.9);
-      ctx.stroke();
-
-      ctx.restore();
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      isDragging = true;
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+      prevMouseX = clientX;
+      prevMouseY = clientY;
+      dragVelocityX = 0;
+      dragVelocityY = 0;
     };
 
-    render2D();
+    const onPointerMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
+      // Parallax on gentle hover
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width && rect.height) {
+        mouseParallaxX = ((clientX - rect.left) / rect.width - 0.5) * 0.45;
+        mouseParallaxY = ((clientY - rect.top) / rect.height - 0.5) * 0.35;
+      }
+
+      if (!isDragging) return;
+
+      const deltaX = clientX - prevMouseX;
+      const deltaY = clientY - prevMouseY;
+      prevMouseX = clientX;
+      prevMouseY = clientY;
+
+      dragVelocityX = deltaX * 0.007;
+      dragVelocityY = deltaY * 0.007;
+
+      toothGroup.rotation.y += dragVelocityX;
+      toothGroup.rotation.x += dragVelocityY;
+      ringGroup.rotation.y += dragVelocityX * 0.6;
+    };
+
+    const onPointerUp = () => {
+      isDragging = false;
+    };
+
+    canvas.addEventListener("mousedown", onPointerDown, { passive: true });
+    window.addEventListener("mousemove", onPointerMove, { passive: true });
+    window.addEventListener("mouseup", onPointerUp, { passive: true });
+
+    canvas.addEventListener("touchstart", onPointerDown, { passive: true });
+    window.addEventListener("touchmove", onPointerMove, { passive: true });
+    window.addEventListener("touchend", onPointerUp, { passive: true });
+
+    // 7. Resize Observer
+    const handleResize = () => {
+      if (destroyed || !renderer) return;
+      const { w: nw, h: nh } = getDims();
+      camera.aspect = nw / nh;
+      camera.updateProjectionMatrix();
+      renderer.setSize(nw, nh, false);
+    };
+
+    const resizeObserver = new ResizeObserver(() => handleResize());
+    resizeObserver.observe(container);
+
+    // 8. Animation Loop
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      if (destroyed) return;
+      animId = requestAnimationFrame(animate);
+
+      const elapsedTime = clock.getElapsedTime();
+
+      // Inertial damping after user releases drag
+      if (!isDragging) {
+        dragVelocityX *= 0.94;
+        dragVelocityY *= 0.94;
+        toothGroup.rotation.y += dragVelocityX + 0.007; // Gentle auto-rotate
+        toothGroup.rotation.x += dragVelocityY;
+      }
+
+      // Smooth floating oscillation (Breathing effect)
+      toothGroup.position.y = Math.sin(elapsedTime * 1.3) * 0.1;
+
+      // Orbital Rings Rotation
+      ring1Mesh.rotation.z = elapsedTime * 0.22;
+      ring2Mesh.rotation.y = -elapsedTime * 0.18;
+
+      // Animate Particles
+      const pArr = particles.geometry.attributes.position.array as Float32Array;
+      for (let i = 0; i < particleCount; i++) {
+        const seed = particleSeeds[i];
+        const curAngle = seed.angle + elapsedTime * seed.speed;
+        pArr[i * 3] = Math.cos(curAngle) * seed.radius;
+        pArr[i * 3 + 1] = seed.y + Math.sin(elapsedTime * 1.5 + i) * 0.12;
+        pArr[i * 3 + 2] = Math.sin(curAngle) * seed.radius;
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      // Smooth Mouse Parallax Lerp
+      rootGroup.rotation.y += (mouseParallaxX - rootGroup.rotation.y) * 0.05;
+      rootGroup.rotation.x += (-mouseParallaxY - rootGroup.rotation.x) * 0.05;
+
+      renderer?.render(scene, camera);
+    };
+
+    animate();
+
+    // 9. Cleanup
     return () => {
       destroyed = true;
       cancelAnimationFrame(animId);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("scroll", onScroll);
+      resizeObserver.disconnect();
+
+      canvas.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("mousemove", onPointerMove);
+      window.removeEventListener("mouseup", onPointerUp);
+
+      canvas.removeEventListener("touchstart", onPointerDown);
+      window.removeEventListener("touchmove", onPointerMove);
+      window.removeEventListener("touchend", onPointerUp);
+
+      // Clean Three.js geometries & materials
+      ring1Geo.dispose();
+      ring1Mat.dispose();
+      ring2Geo.dispose();
+      ring2Mat.dispose();
+      satGeo.dispose();
+      satMat.dispose();
+      sat2Geo.dispose();
+      sat2Mat.dispose();
+      particleGeo.dispose();
+      particleMat.dispose();
+      shadowGeo.dispose();
+      shadowMat.dispose();
+      shadowTexture.dispose();
+
+      toothGroup.traverse((obj) => {
+        if ((obj as THREE.Mesh).isMesh) {
+          const mesh = obj as THREE.Mesh;
+          mesh.geometry?.dispose();
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((m) => m.dispose());
+          } else {
+            mesh.material?.dispose();
+          }
+        }
+      });
+
+      renderer?.dispose();
+      renderer?.forceContextLoss();
     };
   }, []);
 
   return (
-    <div className="relative w-full h-[460px] sm:h-[540px] lg:h-[620px] flex items-center justify-center select-none">
-      
-      {/* Warm Ambient Backdrop Glow */}
+    <div 
+      ref={containerRef}
+      className="relative w-full h-[460px] sm:h-[540px] lg:h-[620px] flex items-center justify-center select-none bg-transparent overflow-visible"
+    >
+      {/* 
+        Seamless Radial Ambient Glow - Fades 100% invisibly into the #F7F4EE hero background.
+        Zero borders, zero cards, zero container boxes.
+      */}
       <div 
-        className="absolute inset-0 pointer-events-none rounded-full blur-[120px] opacity-40"
+        className="absolute inset-0 pointer-events-none rounded-full blur-[130px] opacity-35"
         style={{
-          background: "radial-gradient(circle at center, #D8AE98 0%, #A09B7C 45%, transparent 70%)"
+          background: "radial-gradient(circle at center, #D8AE98 0%, #A09B7C 40%, transparent 70%)"
         }}
       />
-      
-      {/* 3D Canvas Element */}
+
+      {/* 100% Transparent Canvas directly in the hero flow */}
       <canvas
         ref={canvasRef}
-        className="relative w-full h-full max-w-[580px] max-h-[580px] cursor-grab active:cursor-grabbing z-10 block"
-        aria-label="مجسمه سه‌بعدی تعاملی دندانپزشکی دیجیتال"
+        className="relative w-full h-full max-w-[580px] max-h-[580px] cursor-grab active:cursor-grabbing z-10 block bg-transparent"
+        aria-label="مدل سه‌بعدی تعاملی دندان آسیاب"
       />
 
-      {/* Floating 3D Interaction Cue */}
-      <div className="absolute bottom-3 sm:bottom-6 z-20 pointer-events-none">
-        <div className="px-4 py-2 rounded-full bg-[#FCFAF6]/90 backdrop-blur-md shadow-[0_4px_24px_rgba(48,42,33,0.08)] text-[11px] sm:text-xs font-medium text-[#817C70] flex items-center gap-2 border border-[#E8E2D5]/60">
+      {/* Subtle Unboxed Interaction Hint - Floating seamlessly without border box */}
+      <div className={`absolute bottom-2 sm:bottom-4 z-20 pointer-events-none transition-opacity duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
+        <div className="flex items-center gap-2 text-xs font-medium text-[#817C70]/90">
           <Sparkles className="w-3.5 h-3.5 text-[#A09B7C] animate-pulse" />
-          <span>مدل سه‌بعدی تعاملی · با ماوس یا اسکرول حرکت دهید</span>
+          <span>مدل سه‌بعدی دندان آسیاب · با ماوس یا لمس بچرخانید</span>
         </div>
       </div>
-
     </div>
   );
 }

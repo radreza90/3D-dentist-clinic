@@ -3,21 +3,13 @@
 import { motion } from "motion/react";
 import { 
   CalendarCheck, 
-  ChevronDown,
   ArrowLeft
 } from "lucide-react";
 import { Hero3DCanvas } from "./Hero3DCanvas";
 
 export function HomeHero() {
-  const scrollToNext = () => {
-    const nextElem = document.getElementById("stats") || document.getElementById("services");
-    if (nextElem) {
-      nextElem.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   return (
-    <section className="relative min-h-[92vh] sm:min-h-screen flex flex-col justify-between pt-28 sm:pt-32 pb-16 overflow-hidden">
+    <section className="relative min-h-[90vh] sm:min-h-screen flex flex-col justify-center pt-24 sm:pt-28 pb-16 sm:pb-20 overflow-hidden">
       
       {/* Seamless Ambient Lighting - Warm Rose Gold & Khaki glows */}
       <div 
@@ -128,20 +120,6 @@ export function HomeHero() {
           </div>
 
         </div>
-      </div>
-
-      {/* Seamless Scroll Down Cue to Next Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 pt-8 flex justify-center">
-        <button
-          onClick={scrollToNext}
-          className="group inline-flex flex-col items-center gap-2 text-xs font-medium text-[#817C70] hover:text-[#302A21] transition-colors cursor-pointer"
-          aria-label="رفتن به بخش بعدی"
-        >
-          <span>اسکرول برای کاوش کلینیک</span>
-          <div className="w-8 h-8 rounded-full bg-[#FCFAF6]/80 backdrop-blur-sm flex items-center justify-center shadow-xs group-hover:translate-y-1 transition-transform duration-200">
-            <ChevronDown className="w-4 h-4 text-[#A09B7C]" />
-          </div>
-        </button>
       </div>
 
     </section>

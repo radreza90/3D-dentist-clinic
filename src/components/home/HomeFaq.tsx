@@ -4,7 +4,8 @@ import { useState } from "react";
 import { 
   ChevronDown, 
   PhoneCall,
-  HelpCircle
+  HelpCircle,
+  Sparkles
 } from "lucide-react";
 
 export function HomeFaq() {
@@ -13,33 +14,42 @@ export function HomeFaq() {
       id: "1",
       question: "آیا کاشت ایمپلنت دندان همراه با درد و خونریزی است؟",
       answer: "خیر؛ در کلینیک ما با استفاده از اسکن سه‌بعدی و شابلون جراحی دیجیتال (Guided Surgery)، ایمپلنت بدون نیاز به برش وسیع لثه و بخیه کاشته می‌شود. همراه با سیستم بی‌حسی دیجیتال کامپیوتری، در حین جراحی و پس از آن دردی احساس نخواهید کرد.",
+      badge: "جراحی دیجیتال",
     },
     {
       id: "2",
       question: "تفاوت اصلی لمینت سرامیکی و کامپوزیت ونیر چیست؟",
       answer: "لمینت سرامیکی E-max در لابراتوار اختصاصی ساخته می‌شود، ضخامت بسیار کم (۰.۳ میلیمتر) دارد، رنگ‌پذیری آن صفر است و ماندگاری بالای ۱۵ سال دارد. کامپوزیت در یک جلسه مستقیماً روی دندان کار می‌شود، هزینه کمتری دارد اما نیازمند مراقبت بیشتر و پالیش سالانه است.",
+      badge: "زیبایی دندان",
     },
     {
       id: "3",
       question: "آیا امکان پرداخت اقساطی برای درمان‌های ایمپلنت و زیبایی وجود دارد؟",
       answer: "بله، کلینیک برای رفاه مراجعین شرایط پرداخت اقساطی بدون کارمزد و بهره را فراهم کرده است. شرایط اقساط متناسب با برنامه زمانی درمان و با چک صیادی تنظیم می‌گردد.",
+      badge: "تسهیلات مالی",
     },
     {
       id: "4",
       question: "آیا بیمه‌های تکمیلی درمان‌های کلینیک را پوشش می‌دهند؟",
       answer: "برای تمامی درمان‌های تخصصی (جراحی، کشیدن، عصب‌کشی، پروتز و ایمپلنت)، گواهی و فاکتور رسمی معتبر جهت ارائه به تمامی شرکت‌های بیمه تکمیلی (دانا، آسیا، البرز، ایران، معلم و...) صادر می‌گردد.",
+      badge: "بیمه تکمیلی",
     },
     {
       id: "5",
       question: "معاینه و مشاوره اولیه چه مراحلی دارد؟",
       answer: "در جلسه اول، وضعیت فک و دندان‌ها به صورت بالینی و دیجیتال بررسی شده، عکس‌ها ارزیابی می‌شوند و طرح درمان شخصی‌سازی شده به همراه زمان‌بندی و برآورد دقیق هزینه در اختیارتان قرار می‌گیرد.",
+      badge: "پذیرش اول",
     },
   ];
 
-  const [openId, setOpenId] = useState<string | null>("1");
+  // Default first item open
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>({ "1": true });
 
   const toggle = (id: string) => {
-    setOpenId((prev) => (prev === id ? null : id));
+    setOpenIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   return (
@@ -71,58 +81,63 @@ export function HomeFaq() {
           </p>
         </div>
 
-        {/* Seamless Accordion List */}
+        {/* Resilient Accordion List */}
         <div className="space-y-4">
           {faqs.map((faq) => {
-            const isOpen = openId === faq.id;
+            const isOpen = Boolean(openIds[faq.id]);
             return (
               <div
                 key={faq.id}
-                className={`rounded-3xl bg-[#FCFAF6] border transition-all duration-300 overflow-hidden text-right ${
+                className={`rounded-3xl bg-[#FCFAF6] border transition-all duration-200 overflow-hidden text-right ${
                   isOpen 
-                    ? "border-[#A09B7C]/40 shadow-[0_16px_40px_rgba(160,155,124,0.1)]" 
-                    : "border-[#E8E2D5]/35 shadow-[0_6px_24px_rgba(48,42,33,0.02)] hover:border-[#A09B7C]/25"
+                    ? "border-[#A09B7C]/50 shadow-[0_16px_40px_rgba(160,155,124,0.12)] ring-1 ring-[#A09B7C]/20" 
+                    : "border-[#E8E2D5]/40 shadow-[0_4px_16px_rgba(48,42,33,0.02)] hover:border-[#A09B7C]/30"
                 }`}
               >
                 <button
                   type="button"
                   onClick={() => toggle(faq.id)}
-                  className="w-full p-6 sm:p-7 flex items-center justify-between gap-4 text-right cursor-pointer select-none"
+                  className="w-full p-6 sm:p-7 flex items-center justify-between gap-4 text-right cursor-pointer select-none transition-colors"
                   aria-expanded={isOpen}
                 >
-                  <span className={`font-bold text-base sm:text-lg leading-snug transition-colors ${
-                    isOpen ? "text-[#625D45]" : "text-[#302A21]"
-                  }`}>
-                    {faq.question}
-                  </span>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${
-                    isOpen ? "rotate-180 bg-[#A09B7C] text-white" : "bg-[#F7F4EE] text-[#817C70]"
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 text-right">
+                    <span className="inline-block text-[11px] font-semibold text-[#817C70] bg-[#F7F4EE] px-2.5 py-1 rounded-full border border-[#E8E2D5]/50 w-fit">
+                      {faq.badge}
+                    </span>
+                    <span className={`font-bold text-base sm:text-lg leading-snug transition-colors ${
+                      isOpen ? "text-[#625D45]" : "text-[#302A21]"
+                    }`}>
+                      {faq.question}
+                    </span>
+                  </div>
+
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 ${
+                    isOpen ? "rotate-180 bg-[#A09B7C] text-white shadow-xs" : "bg-[#F7F4EE] text-[#817C70]"
                   }`}>
                     <ChevronDown className="w-4 h-4" />
                   </div>
                 </button>
 
-                {/* Resilient smooth CSS grid expansion */}
-                <div
-                  className={`grid transition-all duration-300 ease-in-out ${
-                    isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <div className="px-6 sm:px-7 pb-6 text-sm sm:text-base text-[#817C70] leading-relaxed border-t border-[#E8E2D5]/40 pt-4">
+                {/* Direct Unconditional React Render When Open */}
+                {isOpen && (
+                  <div className="px-6 sm:px-7 pb-6 pt-1 text-sm sm:text-base text-[#817C70] leading-relaxed border-t border-[#E8E2D5]/40 transition-opacity">
+                    <p className="mt-3 leading-loose text-justify text-pretty">
                       {faq.answer}
-                    </div>
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
         </div>
 
         {/* Additional Help Prompt */}
-        <div className="mt-12 text-center p-8 rounded-3xl bg-[#FCFAF6] border border-[#E8E2D5]/40 shadow-[0_12px_40px_rgba(48,42,33,0.03)] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 text-center p-8 rounded-3xl bg-[#FCFAF6] border border-[#E8E2D5]/50 shadow-[0_12px_40px_rgba(48,42,33,0.03)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-right">
-            <h4 className="font-bold text-base text-[#302A21]">سوال دیگری درباره درمان خود دارید؟</h4>
+            <h4 className="font-bold text-base text-[#302A21] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#A09B7C]" />
+              <span>سوال دیگری درباره درمان خود دارید؟</span>
+            </h4>
             <p className="text-xs text-[#817C70] mt-1">مشاوران پزشکی ما آماده پاسخگویی صبورانه به تمامی سوالات شما هستند.</p>
           </div>
           <a
