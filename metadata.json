@@ -1,0 +1,6 @@
+{
+  "name": "Dentist Clinic",
+  "description": "Dental clinic website, online booking, and content management system.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

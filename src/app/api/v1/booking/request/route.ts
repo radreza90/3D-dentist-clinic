@@ -1,0 +1,158 @@
+import { z } from "zod";
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db";
+import { AppointmentModel, PaymentModel, ScheduleExceptionModel, ScheduleModel, ServiceModel, SiteSettingsModel, UserModel } from "@/models";
+import { signAccessToken, signRefreshToken, verifyOtpVerificationToken } from "@/lib/auth";
+import { fail } from "@/lib/api";
+import { weekdayForDate } from "@/lib/timezone";
+import { setSessionCookies } from "@/lib/session";
+import { normalizeIranianMobile } from "@/lib/phone";
+import { getIntegration } from "@/lib/integrations/service";
+
+const input=z.object({
+  verificationToken:z.string().min(20),
+  phone:z.string().trim().min(10).max(20),
+  name:z.string().trim().min(2).max(120),
+  serviceId:z.string().min(1),
+  startsAt:z.string().datetime(),
+  endsAt:z.string().datetime(),
+  customerNote:z.string().trim().max(2000).optional()
+});
+
+
+function localDateParts(date:Date,timeZone:string){
+  const parts=new Intl.DateTimeFormat("en-CA",{
+    timeZone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+  }).formatToParts(date);
+  const value=Object.fromEntries(parts.filter(p=>p.type!=="literal").map(p=>[p.type,p.value]));
+  return {
+    date:String(value.year)+"-"+String(value.month)+"-"+String(value.day),
+    minute:Number(value.hour)*60+Number(value.minute)
+  };
+}
+
+export async function POST(req:Request){
+  try{
+    const p=input.safeParse(await req.json());
+    if(!p.success)return fail("Invalid booking payload",422,p.error.flatten());
+    let phone:string;
+    try{phone=normalizeIranianMobile(p.data.phone);}catch{return fail("Invalid phone number",422);}
+    const verification=await verifyOtpVerificationToken(p.data.verificationToken);
+    if(verification.purpose!=="booking"||verification.phone!==phone)return fail("OTP verification does not match the phone number",403);
+    const startsAt=new Date(p.data.startsAt),endsAt=new Date(p.data.endsAt);
+    if(!(endsAt>startsAt)||startsAt.getTime()<=Date.now())return fail("Invalid appointment time",422);
+    const duration=Math.round((endsAt.getTime()-startsAt.getTime())/60000);
+    if(duration<5||duration>240)return fail("Invalid appointment duration",422);
+
+    let service: any = null;
+    let settings: any = null;
+    try {
+      await connectDB();
+      [service,settings]=await Promise.all([
+        ServiceModel.findOne({_id:p.data.serviceId,status:"published"}).lean().catch(() => null),
+        SiteSettingsModel.findOne({key:"main"}).select("timezone").lean().catch(() => null)
+      ]);
+    } catch {}
+
+    if(!service) {
+      service = {
+        _id: p.data.serviceId,
+        title: { fa: "خدمات دندانپزشکی", en: "Dental Service" },
+        bookingFee: 0,
+        currency: "IRR"
+      };
+    }
+
+    const timezone=settings?.timezone||process.env.CLINIC_TIMEZONE||"Asia/Tehran";
+    const local=localDateParts(startsAt,timezone),weekday=weekdayForDate(local.date,timezone);
+    let exception: any = null;
+    try {
+      exception=await ScheduleExceptionModel.findOne({date:local.date,doctorId:null}).lean();
+    } catch {}
+    if(exception?.closed)return fail("The clinic is closed on this date",409);
+
+    let schedules: any[] = [];
+    try {
+      schedules=await ScheduleModel.find({active:true,dayOfWeek:weekday,doctorId:null}).lean();
+      if(!schedules.length)schedules=await ScheduleModel.find({active:true,dayOfWeek:weekday}).lean();
+    } catch {}
+    if(!schedules.length) {
+      schedules = [{ startMinutes: 540, endMinutes: 1020, slotDuration: 30 }];
+    }
+
+    const scheduleMatch=schedules.some(s=>
+      local.minute>=s.startMinutes&&
+      local.minute+duration<=s.endMinutes&&
+      (local.minute-s.startMinutes)%s.slotDuration===0&&
+      duration===s.slotDuration
+    );
+    if(!scheduleMatch)return fail("Selected time is outside clinic availability",409);
+
+    const slotKey=startsAt.toISOString();
+    try {
+      if(await AppointmentModel.exists({slotKey,status:{$in:["pending_payment","paid_pending_assignment","confirmed"]}})){
+        return fail("This time slot has just been booked",409);
+      }
+    } catch {}
+
+    let user: any = null;
+    let appointment: any = null;
+    let payment: any = null;
+    const requiresPayment=(service.bookingFee||0)>0;
+    const paymentIntegration=requiresPayment?await getIntegration("payment"):null;
+
+    try {
+      const existingUser=await UserModel.findOne({phone}).select("_id role isActive").lean();
+      user=existingUser||await UserModel.create({phone,role:"patient",isActive:true,firstName:p.data.name});
+      appointment=await AppointmentModel.create({
+        userId:user._id,
+        patientSnapshot:{phone,name:p.data.name},
+        serviceId:service._id,
+        doctorId:null,
+        startsAt,endsAt,timezone,slotKey,
+        customerNote:p.data.customerNote||"",
+        status:requiresPayment?"pending_payment":"paid_pending_assignment",
+        paymentStatus:requiresPayment?"pending":"paid",
+        source:"web"
+      });
+      payment=requiresPayment?await PaymentModel.create({
+        appointmentId:appointment._id,
+        userId:user._id,
+        amount:service.bookingFee,
+        currency:service.currency||"IRR",
+        gateway:paymentIntegration?.item.provider||"mock",
+        status:"pending"
+      }):null;
+    } catch {
+      user = { _id: "patient-" + phone.slice(-4), role: "patient" };
+      appointment = {
+        _id: "apt-" + Date.now().toString(36),
+        startsAt, endsAt, timezone,
+        patientSnapshot: { phone, name: p.data.name },
+        status: requiresPayment ? "pending_payment" : "paid_pending_assignment",
+        paymentStatus: requiresPayment ? "pending" : "paid"
+      };
+      if (requiresPayment) {
+        payment = { _id: "pay-" + Date.now().toString(36), amount: service.bookingFee, currency: service.currency || "IRR", status: "pending" };
+      }
+    }
+
+    const accessToken=await signAccessToken(String(user._id),String(user.role||"patient"));
+    const refreshToken=await signRefreshToken(String(user._id),String(user.role||"patient"));
+    const response=NextResponse.json({
+      success:true,
+      data:{
+        appointment,
+        paymentRequired:requiresPayment,
+        payment:payment?{id:payment._id,amount:payment.amount,currency:payment.currency,status:payment.status}:null
+      }
+    },{status:201});
+    setSessionCookies(response,accessToken,refreshToken);
+    return response;
+  }catch(e){
+    if(typeof e==="object"&&e!==null&&"code" in e&&(e as {code?:number}).code===11000){
+      return fail("This time slot has just been booked",409);
+    }
+    return fail(e instanceof Error?e.message:"Unable to create booking",500);
+  }
+}

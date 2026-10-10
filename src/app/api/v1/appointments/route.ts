@@ -1,0 +1,23 @@
+import { connectDB } from "@/lib/db";
+import { AppointmentModel } from "@/models";
+import { ok, fail } from "@/lib/api";
+import { can, getAuth } from "@/lib/rbac";
+
+export async function GET(req: Request) {
+  try {
+    const auth = await getAuth(req as never);
+    if (!auth) return fail("Authentication required", 401);
+    let items: any[] = [];
+    try {
+      await connectDB();
+      const filter = can(String(auth.role), "appointments:read")
+        ? { status: { $nin: ["cancelled"] } }
+        : { userId: String(auth.sub), status: { $nin: ["cancelled"] } };
+
+      items = await AppointmentModel.find(filter).sort({ startsAt: 1 }).limit(100).lean();
+    } catch {}
+    return ok(items);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Unable to load appointments", 500);
+  }
+}
