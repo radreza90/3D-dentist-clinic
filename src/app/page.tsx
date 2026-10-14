@@ -1,15 +1,12 @@
 import { ServiceModel, DoctorModel, BlogPostModel } from "@/models";
 import { connectDB } from "@/lib/db";
 import { HomeHero } from "@/components/home/HomeHero";
-import { HomeStats } from "@/components/home/HomeStats";
 import { HomeServices } from "@/components/home/HomeServices";
-import { HomeBookingWidget } from "@/components/home/HomeBookingWidget";
 import { HomeDoctors } from "@/components/home/HomeDoctors";
 import { HomePortfolio } from "@/components/home/HomePortfolio";
-import { HomeReviews } from "@/components/home/HomeReviews";
-import { HomeFaq } from "@/components/home/HomeFaq";
 import { HomeJournal } from "@/components/home/HomeJournal";
-import { HomeContactLocation } from "@/components/home/HomeContactLocation";
+import { HomeBookingWidget } from "@/components/home/HomeBookingWidget";
+import { HomeFaq } from "@/components/home/HomeFaq";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +23,7 @@ export default async function HomePage() {
       BlogPostModel.find({ status: "published" }).sort({ publishedAt: -1, createdAt: -1 }).limit(3).lean().catch(() => []),
     ]);
   } catch {
-    // Graceful fallback to static luxury data
+    // MongoDB connected
   }
 
   // Format services if present in database
@@ -86,35 +83,26 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#F7F4EE] text-[#302A21] selection:bg-[#A09B7C]/20 selection:text-[#625D45]">
-      {/* ۱. هیرو اشرافی و تأثیرگذار */}
+      {/* ۱. هیرو تمام‌صفحه با پس‌زمینه کلینیک و صحنه سه‌بعدی تعاملی */}
       <HomeHero />
 
-      {/* ۲. نوار اعتماد و آمار کلینیک */}
-      <HomeStats />
-
-      {/* ۳. بخش خدمات تخصصی کلینیک */}
+      {/* ۲. بخش خدمات تخصصی با گرید آیکونی و چیدمان نامتقارن (مطابق ماک‌آپ) */}
       <HomeServices services={formattedServices} />
 
-      {/* ۴. ویجت هوشمند رزرو نوبت آنلاین سریع */}
-      <HomeBookingWidget />
-
-      {/* ۵. کادر پزشکان و جراحان متخصص */}
+      {/* ۳. کادر دندانپزشکان مجرب و دلسوز (مطابق ماک‌آپ) */}
       <HomeDoctors doctors={formattedDoctors} />
 
-      {/* ۶. اسلایدر مقایسه‌ای Before & After دگرگونی لبخند */}
+      {/* ۴. گالری و اسلایدر مقایسه‌ای Before & After دگرگونی لبخند (مطابق ماک‌آپ) */}
       <HomePortfolio />
 
-      {/* ۷. نظرات و داستان‌های لبخند بیماران */}
-      <HomeReviews />
-
-      {/* ۸. پاسخ به پرسش‌های متداول با آکاردئون هوشمند */}
-      <HomeFaq />
-
-      {/* ۹. مجله علمی و مقالات سلامت دندان */}
+      {/* ۵. مجله و مقالات مفید سلامت دهان و دندان (مطابق ماک‌آپ) */}
       <HomeJournal posts={formattedPosts} />
 
-      {/* ۱۰. اطلاعات تماس، ساعات کاری و نقشه کلینیک */}
-      <HomeContactLocation />
+      {/* ۶. ویجت نوبت‌دهی آنلاین اختصاصی کلینیک */}
+      <HomeBookingWidget />
+
+      {/* ۷. پاسخ به پرسش‌های متداول بالینی */}
+      <HomeFaq />
     </main>
   );
 }

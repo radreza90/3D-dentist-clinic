@@ -1,12 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { 
-  GraduationCap, 
-  Calendar, 
-  ArrowLeft
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 
 export interface DoctorItem {
@@ -22,173 +22,141 @@ export interface DoctorItem {
 }
 
 interface HomeDoctorsProps {
-  doctors: DoctorItem[];
+  doctors?: DoctorItem[];
 }
 
-export function HomeDoctors({ doctors }: HomeDoctorsProps) {
-  const fallbackDoctors: DoctorItem[] = [
+export function HomeDoctors({ doctors = [] }: HomeDoctorsProps) {
+  // Canonical 4 doctors matching the exact names and titles from image.png
+  const defaultDoctors = [
     {
-      _id: "1",
-      slug: "dr-ahmadi",
-      name: { fa: "دکتر مریم احمدی", en: "Dr. Maryam Ahmadi" },
-      shortBio: { 
-        fa: "متخصص دندانپزشکی ترمیمی و زیبایی، دارای بورد تخصصی و عضو انجمن دندانپزشکان زیبایی آمریکا (AACD). بیش از ۱۲ سال سابقه در طراحی لبخند با لمینت سرامیکی.",
-        en: "Specialist in Aesthetic and Restorative Dentistry, Board Certified."
-      },
-      specialty: "متخصص ترمیمی و زیبایی · بورد تخصصی",
-      medicalCode: "نظام پزشکی: ۹۸۳۴۲",
-      university: "دانشگاه علوم پزشکی تهران",
-      clinicDays: "شنبه، دوشنبه و چهارشنبه",
-      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80",
+      slug: "dr-narges-kazemi",
+      name: "دکتر نرگس کاظمی",
+      specialty: "متخصص کودکان",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
     },
     {
-      _id: "2",
-      slug: "dr-rezaei",
-      name: { fa: "دکتر علی رضایی", en: "Dr. Ali Rezaei" },
-      shortBio: { 
-        fa: "جراح فک و صورت، فلوشیپ ایمپلنت‌های پیشرفته و بازسازی استخوان فک از دانشگاه زوریخ سوئیس. متخصص در کاشت دندان دیجیتال یک‌روزه بدون درد.",
-        en: "Oral & Maxillofacial Surgeon, Advanced Implantology Fellow."
-      },
-      specialty: "جراح فک و صورت · فلوشیپ ایمپلنت سوئیس",
-      medicalCode: "نظام پزشکی: ۱۰۴۱۵۵",
-      university: "دانشگاه شهید بهشتی",
-      clinicDays: "یک‌شنبه، سه‌شنبه و پنج‌شنبه",
-      image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80",
+      slug: "dr-mehdi-rezaei",
+      name: "دکتر مهدی رضایی",
+      specialty: "متخصص زیبایی",
+      image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80",
     },
     {
-      _id: "3",
-      slug: "dr-pirouz",
-      name: { fa: "دکتر کاوه پیروز", en: "Dr. Kaveh Pirouz" },
-      shortBio: { 
-        fa: "متخصص درمان ریشه (اندودنتیست)، پژوهشگر و استاد دانشگاه با تجربه بیش از ۸۰۰۰ درمان موفق ریشه و جراحی‌های اپیکواکتومی با بزرگنمایی میکروسکوپی.",
-        en: "Endodontist & Microsurgical Root Specialist."
-      },
-      specialty: "متخصص درمان ریشه · میکروسکوپیست",
-      medicalCode: "نظام پزشکی: ۱۱۲۴۰۹",
-      university: "دانشگاه علوم پزشکی ایران",
-      clinicDays: "شنبه تا چهارشنبه (عصرها)",
-      image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=800&q=80",
+      slug: "dr-ali-hosseini",
+      name: "دکتر علی حسینی",
+      specialty: "متخصص ایمپلنت",
+      image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=600&q=80",
+    },
+    {
+      slug: "dr-sara-mohammadi",
+      name: "دکتر سارا محمدی",
+      specialty: "متخصص ارتودنسی",
+      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=600&q=80",
     },
   ];
 
-  const displayDoctors = doctors && doctors.length > 0 ? doctors : fallbackDoctors;
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : defaultDoctors.length - 1));
+  };
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev < defaultDoctors.length - 1 ? prev + 1 : 0));
+  };
 
   return (
-    <section id="doctors" className="py-24 relative overflow-hidden">
-      
-      {/* Ambient Seamless Lighting */}
-      <div 
-        className="absolute top-1/2 left-10 w-96 h-96 rounded-full blur-[150px] opacity-25 pointer-events-none"
-        style={{ background: "#A09B7C" }}
-      />
-
+    <section id="doctors" className="py-24 sm:py-32 relative bg-[#F7F4EE] overflow-hidden text-right">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-4">
-          <div className="text-xs font-semibold tracking-wider text-[#817C70] flex items-center justify-center gap-2">
-            <span>کادر درمان و اساتید</span>
-            <span className="text-[#C2BFA9]">·</span>
-            <span className="text-[#A09B7C]">بورد تخصصی</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          
+          {/* Left Column in RTL: Intro & Button (Matching image.png) */}
+          <div className="lg:col-span-4 lg:col-start-1 flex flex-col items-start space-y-5">
+            <span className="text-xs font-semibold text-[#817C70] tracking-wider">
+              تیم متخصص ما
+            </span>
+
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#302A21] leading-tight tracking-tight">
+              دندانپزشکان مجرب و دلسوز
+            </h2>
+
+            <p className="text-sm sm:text-base text-[#817C70] leading-relaxed text-pretty">
+              با تجربه و دانش روز، در کنار شما هستیم تا بهترین خدمات درمانی و زیبایی را دریافت کنید.
+            </p>
+
+            <div className="pt-2">
+              <Link
+                href="/doctors"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-full text-xs font-semibold text-white bg-[#625D45] hover:bg-[#7F795D] transition-all duration-200 shadow-sm"
+              >
+                <span>معرفی دکترها</span>
+              </Link>
+            </div>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-bold text-[#302A21] tracking-tight text-balance">
-            پزشکان متخصص و جراحان برجسته کلینیک
-          </h2>
-
-          <p className="text-base text-[#817C70] leading-relaxed text-pretty">
-            درمان شما توسط اساتید دانشگاه و متخصصین دارای بورد رسمی کشوری، با تلفیق هنر و جدیدترین گایدلاین‌های پزشکی انجام می‌پذیرد.
-          </p>
-        </div>
-
-        {/* Doctors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {displayDoctors.map((doctor, idx) => (
-            <motion.article
-              key={doctor.slug || doctor._id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              className="rounded-3xl bg-[#FCFAF6] overflow-hidden flex flex-col justify-between shadow-[0_12px_40px_rgba(48,42,33,0.03)] hover:shadow-[0_24px_55px_rgba(160,155,124,0.14)] hover:-translate-y-1 transition-all duration-300 group text-right"
-            >
-              <div>
-                {/* Doctor Portrait Header */}
-                <div className="relative aspect-4/3 w-full bg-[#E8E2D5]/30 overflow-hidden">
-                  <Image
-                    src={doctor.image || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80"}
-                    alt={doctor.name.fa}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover object-top group-hover:scale-104 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                  
-                  {/* Subtle Gradient Scrim */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#302A21]/75 via-transparent to-transparent" />
-
-                  {/* Clean unboxed medical code */}
-                  <div className="absolute top-3 right-3">
-                    <span className="px-3 py-1 rounded-full bg-[#FCFAF6]/90 backdrop-blur-sm text-[#302A21] text-[11px] font-medium font-mono">
-                      {doctor.medicalCode || "پزشک رسمی"}
-                    </span>
-                  </div>
-
-                  <div className="absolute bottom-3.5 right-4 left-4 text-white">
-                    <h3 className="font-bold text-lg text-white">
-                      {doctor.name.fa}
-                    </h3>
-                    <p className="text-xs text-[#D8AE98] font-mono dir-ltr text-right mt-0.5">
-                      {doctor.name.en}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Doctor Details */}
-                <div className="p-7 space-y-4">
-                  {/* Specialty text */}
-                  <div className="text-xs font-semibold text-[#625D45]">
-                    {doctor.specialty}
-                  </div>
-
-                  {/* Bio */}
-                  <p className="text-xs sm:text-sm text-[#817C70] leading-relaxed line-clamp-3">
-                    {doctor.shortBio?.fa}
-                  </p>
-
-                  {/* Meta Specs */}
-                  <div className="space-y-2 pt-3 border-t border-[#E8E2D5]/40 text-xs text-[#817C70]">
-                    {doctor.university && (
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4 text-[#A09B7C] shrink-0" />
-                        <span>دانش‌آموخته: <strong className="text-[#302A21] font-medium">{doctor.university}</strong></span>
-                      </div>
-                    )}
-                    {doctor.clinicDays && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[#A09B7C] shrink-0" />
-                        <span>روزهای حضور: <strong className="text-[#302A21] font-medium">{doctor.clinicDays}</strong></span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Footer Action */}
-              <div className="p-7 pt-0">
-                <Link
-                  href={`/booking?doctor=${doctor.slug}`}
-                  className="w-full py-3 rounded-full bg-[#A09B7C]/15 hover:bg-[#A09B7C] text-[#625D45] hover:text-white text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 group/btn"
+          {/* Right Column in RTL: 4 Doctor Cards + Navigation Buttons (Matching image.png) */}
+          <div className="lg:col-span-8 lg:col-start-5 relative">
+            
+            {/* Desktop 4-in-a-row Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {defaultDoctors.map((doc, idx) => (
+                <motion.div
+                  key={doc.slug}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: idx * 0.08 }}
                 >
-                  <span>رزرو نوبت با {doctor.name.fa}</span>
-                  <ArrowLeft className="w-3.5 h-3.5 group-hover/btn:-translate-x-1 transition-transform" />
-                </Link>
-              </div>
+                  <Link
+                    href={`/doctors/${doc.slug}`}
+                    className="group flex flex-col rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5]/70 overflow-hidden hover:shadow-[0_16px_32px_rgba(160,155,124,0.18)] hover:-translate-y-1 transition-all duration-300 text-center"
+                  >
+                    {/* Doctor Portrait with clinical background */}
+                    <div className="relative aspect-4/5 w-full bg-[#E8E2D5]/40 overflow-hidden">
+                      <Image
+                        src={doc.image}
+                        alt={doc.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, 20vw"
+                        className="object-cover object-top group-hover:scale-104 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                    </div>
 
-            </motion.article>
-          ))}
+                    {/* Bottom Info Box */}
+                    <div className="p-4 flex flex-col items-center justify-between min-h-[90px]">
+                      <h3 className="text-xs sm:text-sm font-bold text-[#302A21] group-hover:text-[#625D45] transition-colors line-clamp-1">
+                        {doc.name}
+                      </h3>
+                      <p className="text-[11px] text-[#817C70] mt-1 font-medium">
+                        {doc.specialty}
+                      </p>
+                      
+                      {/* Subdued Chevron Arrow */}
+                      <div className="text-[#817C70] group-hover:text-[#625D45] group-hover:-translate-x-1 transition-all mt-2">
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Carousel navigation arrow button on right border (Matching image.png) */}
+            <div className="hidden sm:flex absolute -left-5 top-1/2 -translate-y-1/2 z-20">
+              <button
+                type="button"
+                onClick={nextSlide}
+                className="w-9 h-9 rounded-full bg-white border border-[#E8E2D5] shadow-md flex items-center justify-center text-[#302A21] hover:bg-[#F7F4EE] transition-colors"
+                aria-label="پزشک بعدی"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+
+          </div>
+
         </div>
-
       </div>
     </section>
   );
