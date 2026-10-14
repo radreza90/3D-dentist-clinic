@@ -132,6 +132,7 @@ export function HomeJournal({ posts }: HomeJournalProps) {
                     src={post.image || "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=800&q=80"}
                     alt={post.title.fa}
                     fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover group-hover:scale-104 transition-transform duration-500"
                     referrerPolicy="no-referrer"
                   />

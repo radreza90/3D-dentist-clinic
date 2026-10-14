@@ -27,11 +27,57 @@ export function Hero3DCanvas() {
 
     const { w, h } = getDims();
 
-    // 1. Transparent WebGL Renderer - 100% Seamless with Hero Background
+    // 1. Safely query WebGL context
+    let gl: WebGLRenderingContext | WebGL2RenderingContext | null = null;
+    try {
+      gl = (canvas.getContext("webgl2") || canvas.getContext("webgl")) as WebGLRenderingContext | null;
+    } catch {
+      gl = null;
+    }
+
+    if (!gl) {
+      // Graceful 2D luxury illustration fallback
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        canvas.width = w;
+        canvas.height = h;
+        ctx.clearRect(0, 0, w, h);
+        const cx = w / 2;
+        const cy = h / 2;
+
+        // Soft radial aura
+        const rad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 160);
+        rad.addColorStop(0, "rgba(216, 174, 152, 0.4)");
+        rad.addColorStop(0.6, "rgba(160, 155, 124, 0.15)");
+        rad.addColorStop(1, "rgba(247, 244, 238, 0)");
+        ctx.fillStyle = rad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 180, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Elegant geometric rings
+        ctx.strokeStyle = "rgba(160, 155, 124, 0.35)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 120, 48, -0.25, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(216, 174, 152, 0.4)";
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 145, 58, 0.35, 0, Math.PI * 2);
+        ctx.stroke();
+
+        setIsLoaded(true);
+      }
+      return;
+    }
+
+    // 2. Transparent WebGL Renderer - 100% Seamless with Hero Background
     let renderer: THREE.WebGLRenderer | null = null;
     try {
       renderer = new THREE.WebGLRenderer({
         canvas,
+        context: gl,
         antialias: true,
         alpha: true,
         powerPreference: "high-performance",
@@ -45,7 +91,7 @@ export function Hero3DCanvas() {
       return;
     }
 
-    // 2. Scene & Camera
+    // 3. Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
     camera.position.set(0, 0.1, 7.8);
@@ -59,7 +105,7 @@ export function Hero3DCanvas() {
     rootGroup.add(toothGroup);
 
     // Environment Lighting Rig
-    const ambientLight = new THREE.AmbientLight(0xFFFBF5, 1.9);
+    const ambientLight = new THREE.AmbientLight(0xFFFBF5, 2.0);
     scene.add(ambientLight);
 
     // Key Light (Warm ivory sunlight)
@@ -73,7 +119,7 @@ export function Hero3DCanvas() {
     scene.add(fillLight);
 
     // Back Rim Light (Warm rose gold luster for tooth silhouette)
-    const rimLight = new THREE.DirectionalLight(0xD8AE98, 2.2);
+    const rimLight = new THREE.DirectionalLight(0xD8AE98, 2.4);
     rimLight.position.set(0, -3, -6);
     scene.add(rimLight);
 
@@ -83,7 +129,7 @@ export function Hero3DCanvas() {
     scene.add(topLight);
 
     // =========================================================
-    // 3. Luxurious 3D Orbit Rings (طراحی مداری قبلی)
+    // 4. Luxurious 3D Orbit Rings
     // =========================================================
     const ringGroup = new THREE.Group();
     rootGroup.add(ringGroup);
@@ -112,7 +158,7 @@ export function Hero3DCanvas() {
     ring2Mesh.rotation.z = Math.PI / 4.2;
     ringGroup.add(ring2Mesh);
 
-    // Subtle Satellite Sphere on Ring 1
+    // Satellite Sphere on Ring 1
     const satGeo = new THREE.SphereGeometry(0.065, 16, 16);
     const satMat = new THREE.MeshStandardMaterial({
       color: 0xD8AE98,
@@ -139,7 +185,7 @@ export function Hero3DCanvas() {
     sat2Mesh.position.set(2.72, 0, 0);
 
     // =========================================================
-    // 4. Floating Ambient Luminous Particles (ذرات نورانی معلق)
+    // 5. Floating Ambient Luminous Particles
     // =========================================================
     const particleCount = 36;
     const particleGeo = new THREE.BufferGeometry();
@@ -196,7 +242,7 @@ export function Hero3DCanvas() {
     rootGroup.add(shadowMesh);
 
     // =========================================================
-    // 5. Load Molar Tooth (molar-tooth.glb) at Center
+    // 6. Load Molar Tooth (molar-tooth.glb) at Center
     // =========================================================
     const loader = new GLTFLoader();
     loader.load(
@@ -251,7 +297,7 @@ export function Hero3DCanvas() {
     );
 
     // =========================================================
-    // 6. Natural Interactive Drag & Mouse Parallax
+    // 7. Natural Interactive Drag & Mouse Parallax
     // =========================================================
     let isDragging = false;
     let prevMouseX = 0;
@@ -309,7 +355,7 @@ export function Hero3DCanvas() {
     window.addEventListener("touchmove", onPointerMove, { passive: true });
     window.addEventListener("touchend", onPointerUp, { passive: true });
 
-    // 7. Resize Observer
+    // 8. Resize Observer
     const handleResize = () => {
       if (destroyed || !renderer) return;
       const { w: nw, h: nh } = getDims();
@@ -321,14 +367,14 @@ export function Hero3DCanvas() {
     const resizeObserver = new ResizeObserver(() => handleResize());
     resizeObserver.observe(container);
 
-    // 8. Animation Loop
-    const clock = new THREE.Clock();
+    // 9. Animation Loop with performance.now()
+    const startTime = performance.now();
 
     const animate = () => {
       if (destroyed) return;
       animId = requestAnimationFrame(animate);
 
-      const elapsedTime = clock.getElapsedTime();
+      const elapsedTime = (performance.now() - startTime) / 1000;
 
       // Inertial damping after user releases drag
       if (!isDragging) {
@@ -365,7 +411,7 @@ export function Hero3DCanvas() {
 
     animate();
 
-    // 9. Cleanup
+    // 10. Cleanup
     return () => {
       destroyed = true;
       cancelAnimationFrame(animId);

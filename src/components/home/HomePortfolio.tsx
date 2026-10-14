@@ -133,6 +133,7 @@ export function HomePortfolio() {
                   src={currentCase.afterImg}
                   alt="بعد از درمان"
                   fill
+                  sizes="(max-width: 1024px) 100vw, 60vw"
                   className="object-cover object-center pointer-events-none"
                   referrerPolicy="no-referrer"
                 />
@@ -147,6 +148,7 @@ export function HomePortfolio() {
                       src={currentCase.beforeImg}
                       alt="قبل از درمان"
                       fill
+                      sizes="(max-width: 1024px) 100vw, 60vw"
                       className="object-cover object-center pointer-events-none"
                       referrerPolicy="no-referrer"
                     />

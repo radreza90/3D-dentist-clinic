@@ -30,9 +30,9 @@ export async function connectDB() {
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 2000,
+      serverSelectionTimeoutMS: 10000,
     }).catch((err) => {
-      console.warn("MongoDB not connected — operating in offline/mock mode:", err.message);
+      console.warn("MongoDB connection failed:", err.message);
       cached.promise = null;
       return null;
     });

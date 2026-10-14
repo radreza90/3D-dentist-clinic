@@ -39,7 +39,7 @@ export function HomeDoctors({ doctors }: HomeDoctorsProps) {
       medicalCode: "نظام پزشکی: ۹۸۳۴۲",
       university: "دانشگاه علوم پزشکی تهران",
       clinicDays: "شنبه، دوشنبه و چهارشنبه",
-      image: "https://images.unsplash.com/photo-1594824813590-79dfb8c2d28d?auto=format&fit=crop&w=800&q=80",
+      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80",
     },
     {
       _id: "2",
@@ -116,9 +116,10 @@ export function HomeDoctors({ doctors }: HomeDoctorsProps) {
                 {/* Doctor Portrait Header */}
                 <div className="relative aspect-4/3 w-full bg-[#E8E2D5]/30 overflow-hidden">
                   <Image
-                    src={doctor.image || "https://images.unsplash.com/photo-1594824813590-79dfb8c2d28d?auto=format&fit=crop&w=800&q=80"}
+                    src={doctor.image || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80"}
                     alt={doctor.name.fa}
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover object-top group-hover:scale-104 transition-transform duration-500"
                     referrerPolicy="no-referrer"
                   />

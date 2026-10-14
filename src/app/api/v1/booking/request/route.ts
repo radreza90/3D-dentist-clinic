@@ -95,47 +95,36 @@ export async function POST(req:Request){
       }
     } catch {}
 
-    let user: any = null;
-    let appointment: any = null;
-    let payment: any = null;
     const requiresPayment=(service.bookingFee||0)>0;
     const paymentIntegration=requiresPayment?await getIntegration("payment"):null;
 
-    try {
-      const existingUser=await UserModel.findOne({phone}).select("_id role isActive").lean();
-      user=existingUser||await UserModel.create({phone,role:"patient",isActive:true,firstName:p.data.name});
-      appointment=await AppointmentModel.create({
-        userId:user._id,
-        patientSnapshot:{phone,name:p.data.name},
-        serviceId:service._id,
-        doctorId:null,
-        startsAt,endsAt,timezone,slotKey,
-        customerNote:p.data.customerNote||"",
-        status:requiresPayment?"pending_payment":"paid_pending_assignment",
-        paymentStatus:requiresPayment?"pending":"paid",
-        source:"web"
-      });
-      payment=requiresPayment?await PaymentModel.create({
-        appointmentId:appointment._id,
-        userId:user._id,
-        amount:service.bookingFee,
-        currency:service.currency||"IRR",
-        gateway:paymentIntegration?.item.provider||"mock",
-        status:"pending"
-      }):null;
-    } catch {
-      user = { _id: "patient-" + phone.slice(-4), role: "patient" };
-      appointment = {
-        _id: "apt-" + Date.now().toString(36),
-        startsAt, endsAt, timezone,
-        patientSnapshot: { phone, name: p.data.name },
-        status: requiresPayment ? "pending_payment" : "paid_pending_assignment",
-        paymentStatus: requiresPayment ? "pending" : "paid"
-      };
-      if (requiresPayment) {
-        payment = { _id: "pay-" + Date.now().toString(36), amount: service.bookingFee, currency: service.currency || "IRR", status: "pending" };
-      }
-    }
+    await connectDB();
+    const existingUser = await UserModel.findOne({ phone }).select("_id role isActive").lean();
+    const user = existingUser || await UserModel.create({ phone, role: "patient", isActive: true, firstName: p.data.name });
+
+    const appointment = await AppointmentModel.create({
+      userId: user._id,
+      patientSnapshot: { phone, name: p.data.name },
+      serviceId: service._id,
+      doctorId: null,
+      startsAt,
+      endsAt,
+      timezone,
+      slotKey,
+      customerNote: p.data.customerNote || "",
+      status: requiresPayment ? "pending_payment" : "paid_pending_assignment",
+      paymentStatus: requiresPayment ? "pending" : "paid",
+      source: "web"
+    });
+
+    const payment = requiresPayment ? await PaymentModel.create({
+      appointmentId: appointment._id,
+      userId: user._id,
+      amount: service.bookingFee,
+      currency: service.currency || "IRR",
+      gateway: paymentIntegration?.item.provider || "mock",
+      status: "pending"
+    }) : null;
 
     const accessToken=await signAccessToken(String(user._id),String(user.role||"patient"));
     const refreshToken=await signRefreshToken(String(user._id),String(user.role||"patient"));

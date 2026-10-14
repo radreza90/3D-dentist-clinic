@@ -251,10 +251,10 @@ export function HomeServices({ services }: HomeServicesProps) {
                 {/* Card Action Link */}
                 <div className="pt-6 mt-4 border-t border-[#E8E2D5]/40 flex items-center justify-between">
                   <a
-                    href="#booking"
+                    href={`/booking?service=${service.slug}`}
                     className="text-xs font-semibold text-[#A09B7C] hover:text-[#625D45] flex items-center gap-1.5 transition-colors"
                   >
-                    <span>رزرو وقت این خدمت</span>
+                    <span>رزرو آنلاین نوبت</span>
                     <ArrowLeft className="w-3.5 h-3.5" />
                   </a>
                   <span className="text-[11px] text-[#817C70]">مشاوره رایگان</span>
