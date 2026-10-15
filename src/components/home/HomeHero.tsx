@@ -6,11 +6,11 @@ import {
   CalendarCheck, 
   ArrowLeft
 } from "lucide-react";
-import { Hero3DCanvas } from "./Hero3DCanvas";
+import { ScrollToothCanvas } from "./ScrollToothCanvas";
 
 export function HomeHero() {
   return (
-    <section className="relative w-full h-[100svh] min-h-[640px] flex items-center justify-center overflow-hidden bg-[#241E17]">
+    <section id="hero" className="relative w-full h-[100svh] min-h-[640px] flex items-center justify-center overflow-hidden bg-[#241E17]">
       
       {/* 1. Photorealistic Luxury Dental Clinic Background */}
       <div className="absolute inset-0 z-0">
@@ -39,23 +39,21 @@ export function HomeHero() {
         />
       </div>
 
-      {/* 2. Interactive 3D Molar Tooth Scene in Center/Left */}
+      {/* 2. Desktop Space Anchor for Global Scroll-Trigger Tooth Scene */}
       <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 h-full items-center">
-          <div className="hidden lg:flex lg:col-span-7 h-full items-center justify-center pointer-events-auto">
-            <Hero3DCanvas />
-          </div>
+          <div className="hidden lg:flex lg:col-span-7 h-full items-center justify-center pointer-events-none" />
         </div>
       </div>
 
-      {/* 3. Hero Content (Right-aligned in RTL, matching image.png exactly) */}
+      {/* 3. Hero Content (Right-aligned in RTL) */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
-          {/* Mobile 3D canvas view */}
+          {/* Mobile 3D canvas view - Lightweight & responsive */}
           <div className="flex lg:hidden col-span-12 items-center justify-center -mb-8 pointer-events-auto">
             <div className="w-full max-w-[320px] h-[320px]">
-              <Hero3DCanvas />
+              <ScrollToothCanvas isGlobalScrollTrigger={false} />
             </div>
           </div>
 

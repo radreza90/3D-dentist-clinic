@@ -1,12 +1,15 @@
 import { ServiceModel, DoctorModel, BlogPostModel } from "@/models";
 import { connectDB } from "@/lib/db";
 import { HomeHero } from "@/components/home/HomeHero";
+import { HomeTechnology } from "@/components/home/HomeTechnology";
 import { HomeServices } from "@/components/home/HomeServices";
 import { HomeDoctors } from "@/components/home/HomeDoctors";
 import { HomePortfolio } from "@/components/home/HomePortfolio";
 import { HomeJournal } from "@/components/home/HomeJournal";
 import { HomeBookingWidget } from "@/components/home/HomeBookingWidget";
 import { HomeFaq } from "@/components/home/HomeFaq";
+import { ScrollToothCanvas } from "@/components/home/ScrollToothCanvas";
+import { ScrollProgressWaypoints } from "@/components/home/ScrollProgressWaypoints";
 
 export const dynamic = "force-dynamic";
 
@@ -82,26 +85,35 @@ export default async function HomePage() {
   })) || [];
 
   return (
-    <main className="min-h-screen bg-[#F7F4EE] text-[#302A21] selection:bg-[#A09B7C]/20 selection:text-[#625D45]">
-      {/* ۱. هیرو تمام‌صفحه با پس‌زمینه کلینیک و صحنه سه‌بعدی تعاملی */}
+    <main className="min-h-screen bg-[#F7F4EE] text-[#302A21] selection:bg-[#A09B7C]/20 selection:text-[#625D45] relative">
+      {/* مدل سه‌بعدی دندان متصل به اسکرول تریگر در کل سکشن‌های بالا */}
+      <ScrollToothCanvas isGlobalScrollTrigger={true} />
+
+      {/* ناوبری ظریف ستونی نقاط اسکرول */}
+      <ScrollProgressWaypoints />
+
+      {/* ۱. هیرو تمام‌صفحه با پس‌زمینه کلینیک و کادر سه‌بعدی */}
       <HomeHero />
 
-      {/* ۲. بخش خدمات تخصصی با گرید آیکونی و چیدمان نامتقارن (مطابق ماک‌آپ) */}
+      {/* ۲. بخش تکنولوژی و دقت میکرونی سه‌بعدی (اسکرول تریگر دندان) */}
+      <HomeTechnology />
+
+      {/* ۳. بخش خدمات تخصصی با گرید آیکونی */}
       <HomeServices services={formattedServices} />
 
-      {/* ۳. کادر دندانپزشکان مجرب و دلسوز (مطابق ماک‌آپ) */}
+      {/* ۴. کادر دندانپزشکان مجرب و دلسوز */}
       <HomeDoctors doctors={formattedDoctors} />
 
-      {/* ۴. گالری و اسلایدر مقایسه‌ای Before & After دگرگونی لبخند (مطابق ماک‌آپ) */}
+      {/* ۵. گالری و اسلایدر مقایسه‌ای Before & After */}
       <HomePortfolio />
 
-      {/* ۵. مجله و مقالات مفید سلامت دهان و دندان (مطابق ماک‌آپ) */}
+      {/* ۶. مجله و مقالات سلامت دهان و دندان */}
       <HomeJournal posts={formattedPosts} />
 
-      {/* ۶. ویجت نوبت‌دهی آنلاین اختصاصی کلینیک */}
+      {/* ۷. ویجت نوبت‌دهی آنلاین اختصاصی کلینیک */}
       <HomeBookingWidget />
 
-      {/* ۷. پاسخ به پرسش‌های متداول بالینی */}
+      {/* ۸. پاسخ به پرسش‌های متداول بالینی */}
       <HomeFaq />
     </main>
   );
