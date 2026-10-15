@@ -39,70 +39,49 @@ export function HomeHero() {
         />
       </div>
 
-      {/* 2. Desktop Space Anchor for Global Scroll-Trigger Tooth Scene */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 h-full items-center">
-          <div className="hidden lg:flex lg:col-span-7 h-full items-center justify-center pointer-events-none" />
-        </div>
-      </div>
-
-      {/* 3. Hero Content (Right-aligned in RTL) */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-16">
+      {/* 2. Hero Content (Right-aligned in RTL) */}
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-12 sm:pt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
-          {/* Mobile 3D canvas view - Lightweight & responsive */}
-          <div className="flex lg:hidden col-span-12 items-center justify-center -mb-8 pointer-events-auto">
-            <div className="w-full max-w-[320px] h-[320px]">
-              <ScrollToothCanvas isGlobalScrollTrigger={false} />
+          {/* Left Column (Columns 1-7 on desktop, centered on mobile): Prominent 3D Interactive Tooth */}
+          <div className="col-span-12 lg:col-span-7 flex flex-col items-center justify-center order-2 lg:order-1 pointer-events-auto">
+            <div className="relative w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[520px] h-[340px] sm:h-[400px] lg:h-[480px] flex items-center justify-center">
+              <ScrollToothCanvas variant="hero" />
+            </div>
+
+            {/* Delicate Interactive Drag & Scroll Indicator */}
+            <div className="mt-1 sm:mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-white/90 text-xs font-medium shadow-md select-none transition-transform hover:scale-105">
+              <span className="w-2 h-2 rounded-full bg-[#D8AE98] animate-ping" />
+              <span>مدل سه‌بعدی تعاملی · چرخش ۳۶۰ درجه با درگ ماوس و اسکرول</span>
             </div>
           </div>
 
           {/* Right Column: Hero Typography & CTA Buttons */}
-          <div className="lg:col-span-5 lg:col-start-8 flex flex-col items-start text-right space-y-5">
+          <div className="col-span-12 lg:col-span-5 order-1 lg:order-2 flex flex-col items-start text-right space-y-5">
             
             {/* Kicker */}
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-xs sm:text-sm font-medium tracking-wide text-[#D8AE98]"
-            >
+            <div className="text-xs sm:text-sm font-semibold tracking-wide text-[#D8AE98] opacity-100 transition-opacity">
               <span>لبخند سالم، زندگی زیباتر</span>
-            </motion.div>
+            </div>
 
             {/* Display Headline */}
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold tracking-tight text-white leading-[1.3] text-balance"
-            >
+            <h1 className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold tracking-tight text-white leading-[1.3] text-balance opacity-100">
               کلینیک دندانپزشکی
               <br />
               <span className="text-[#F7F4EE]">با رویکردی متفاوت</span>
-            </motion.h1>
+            </h1>
 
             {/* Subtitle */}
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-sm sm:text-base text-white/80 leading-relaxed max-w-lg text-pretty"
-            >
+            <p className="text-sm sm:text-base text-white/85 leading-relaxed max-w-lg text-pretty opacity-100">
               ما با بهره‌گیری از جدیدترین تکنولوژی‌ها و تیم متخصص، به شما کمک می‌کنیم لبخندی سالم‌تر و زیباتر داشته باشید.
-            </motion.p>
+            </p>
 
             {/* CTA Buttons Row */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="flex flex-wrap items-center gap-3 pt-3 w-full sm:w-auto"
-            >
+            <div className="flex flex-wrap items-center gap-3 pt-3 w-full sm:w-auto opacity-100">
               {/* Primary Booking Button */}
               <a 
                 href="#booking"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-semibold text-white bg-[#625D45] hover:bg-[#7F795D] active:bg-[#4E4A37] transition-all duration-200 shadow-[0_8px_25px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(98,93,69,0.5)]"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-semibold text-white bg-[#625D45] hover:bg-[#7F795D] active:bg-[#4E4A37] transition-all duration-200 shadow-[0_8px_25px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_30px_rgba(98,93,69,0.5)] cursor-pointer"
               >
                 <CalendarCheck className="w-4 h-4" />
                 <span>رزرو نوبت آنلاین</span>
@@ -111,12 +90,12 @@ export function HomeHero() {
               {/* Secondary Services Button */}
               <a 
                 href="#services"
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-xs sm:text-sm font-medium text-white/90 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-200"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-xs sm:text-sm font-medium text-white/90 hover:text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-200 cursor-pointer"
               >
                 <span>مشاهده خدمات</span>
                 <ArrowLeft className="w-4 h-4 text-[#D8AE98]" />
               </a>
-            </motion.div>
+            </div>
 
           </div>
 

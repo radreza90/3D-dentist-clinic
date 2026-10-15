@@ -131,31 +131,39 @@ export function HomePortfolio() {
                 onMouseMove={handleSliderMove}
                 onTouchMove={handleSliderMove}
               >
-                {/* After Image (Background layer) */}
+                {/* After Image (Background layer) with dental illustration fallback */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#A09B7C]/30 via-[#FCFAF6] to-[#D8AE98]/30 flex items-center justify-center">
+                  <div className="text-center p-4">
+                    <span className="text-xs font-semibold text-[#625D45]">لبخند درخشان و یکدست (نتیجه نهایی)</span>
+                  </div>
+                </div>
                 <Image
                   src={current.afterImg}
                   alt="بعد از درمان دندانپزشکی"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover object-center pointer-events-none"
+                  className="object-cover object-center pointer-events-none relative z-10"
                   referrerPolicy="no-referrer"
                 />
 
                 {/* Before Image (Clipped overlay layer) */}
                 <div 
-                  className="absolute inset-0 overflow-hidden pointer-events-none"
+                  className="absolute inset-0 overflow-hidden pointer-events-none z-20"
                   style={{ width: `${sliderPosition}%` }}
                 >
                   <div 
                     className="absolute inset-0 h-full"
                     style={{ width: `calc(100% * 100 / ${Math.max(sliderPosition, 1)})` }}
                   >
+                    <div className="absolute inset-0 bg-[#E8E2D5]/70 flex items-center justify-center">
+                      <span className="text-xs font-semibold text-[#817C70]">وضعیت اولیه دندان‌ها (قبل از درمان)</span>
+                    </div>
                     <Image
                       src={current.beforeImg}
                       alt="قبل از درمان دندانپزشکی"
                       fill
                       sizes="(max-width: 1024px) 100vw, 50vw"
-                      className="object-cover object-center pointer-events-none"
+                      className="object-cover object-center pointer-events-none relative z-10"
                       referrerPolicy="no-referrer"
                     />
                   </div>

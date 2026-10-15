@@ -11,6 +11,7 @@ import {
   ArrowUpRight 
 } from "lucide-react";
 import Link from "next/link";
+import { ScrollToothCanvas } from "./ScrollToothCanvas";
 
 export function HomeTechnology() {
   const [activeFeature, setActiveFeature] = useState(0);
@@ -97,14 +98,10 @@ export function HomeTechnology() {
               const isActive = activeFeature === idx;
 
               return (
-                <motion.div
+                <div
                   key={feature.id}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: idx * 0.08 }}
                   onClick={() => setActiveFeature(idx)}
-                  className={`p-6 sm:p-7 rounded-3xl cursor-pointer transition-all duration-300 border ${
+                  className={`p-6 sm:p-7 rounded-3xl cursor-pointer transition-all duration-300 border opacity-100 ${
                     isActive 
                       ? "bg-[#FCFAF6] border-[#A09B7C] shadow-[0_16px_40px_rgba(160,155,124,0.14)]" 
                       : "bg-[#FCFAF6]/60 border-[#E8E2D5]/70 hover:border-[#A09B7C]/50 hover:bg-[#FCFAF6]"
@@ -153,7 +150,7 @@ export function HomeTechnology() {
                       </div>
                     </motion.div>
                   )}
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -174,8 +171,8 @@ export function HomeTechnology() {
                   <span>اسکن آناتومیک زنده · تحلیل تاج و ریشه</span>
                 </div>
 
-                <div className="h-44 sm:h-52 flex items-center justify-center">
-                  {/* Subtle placeholder for layout flow; the 3D model glides here smoothly */}
+                <div className="w-full h-52 sm:h-60 flex items-center justify-center my-2 pointer-events-auto">
+                  <ScrollToothCanvas variant="tech" />
                 </div>
 
                 <p className="text-xs text-[#817C70] leading-relaxed">

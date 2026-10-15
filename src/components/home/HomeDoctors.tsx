@@ -98,29 +98,35 @@ export function HomeDoctors({ doctors = [] }: HomeDoctorsProps) {
             
             {/* Desktop 4-in-a-row Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {defaultDoctors.map((doc, idx) => (
-                <motion.div
+              {defaultDoctors.map((doc) => (
+                <div
                   key={doc.slug}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: idx * 0.08 }}
+                  className="opacity-100 transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <Link
                     href={`/doctors/${doc.slug}`}
-                    className="group flex flex-col rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5]/70 overflow-hidden hover:shadow-[0_16px_32px_rgba(160,155,124,0.18)] hover:-translate-y-1 transition-all duration-300 text-center"
+                    className="group flex flex-col rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5]/70 overflow-hidden hover:shadow-[0_16px_32px_rgba(160,155,124,0.18)] transition-all duration-300 text-center select-none"
                   >
-                    {/* Doctor Portrait with clinical background */}
+                    {/* Doctor Portrait with clinical background & permanent SVG fallback */}
                     <div className="relative aspect-4/5 w-full bg-[#E8E2D5]/40 overflow-hidden">
+                      {/* Stylized Doctor Silhouette Fallback */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#C2BFA9]/30 to-[#A09B7C]/20 text-[#625D45]">
+                        <svg viewBox="0 0 100 120" fill="currentColor" className="w-24 h-28 opacity-40">
+                          <circle cx="50" cy="35" r="20" />
+                          <path d="M15 105c0-20 15-35 35-35s35 15 35 35v15H15v-15z" />
+                          <path d="M45 75v20h10V75h-10z" fill="#D8AE98" opacity="0.6" />
+                        </svg>
+                      </div>
+
                       <Image
                         src={doc.image}
                         alt={doc.name}
                         fill
                         sizes="(max-width: 640px) 50vw, 20vw"
-                        className="object-cover object-top group-hover:scale-104 transition-transform duration-500"
+                        className="object-cover object-top group-hover:scale-104 transition-transform duration-500 relative z-10"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none z-20" />
                     </div>
 
                     {/* Bottom Info Box */}
@@ -138,7 +144,7 @@ export function HomeDoctors({ doctors = [] }: HomeDoctorsProps) {
                       </div>
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
 

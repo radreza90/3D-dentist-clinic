@@ -86,9 +86,6 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#F7F4EE] text-[#302A21] selection:bg-[#A09B7C]/20 selection:text-[#625D45] relative">
-      {/* مدل سه‌بعدی دندان متصل به اسکرول تریگر در کل سکشن‌های بالا */}
-      <ScrollToothCanvas isGlobalScrollTrigger={true} />
-
       {/* ناوبری ظریف ستونی نقاط اسکرول */}
       <ScrollProgressWaypoints />
 

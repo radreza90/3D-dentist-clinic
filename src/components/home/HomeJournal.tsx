@@ -80,27 +80,32 @@ export function HomeJournal({ posts = [] }: HomeJournalProps) {
           <div className="lg:col-span-8 lg:col-start-1 order-2 lg:order-1 relative">
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {defaultArticles.map((article, idx) => (
-                <motion.div
+              {defaultArticles.map((article) => (
+                <div
                   key={article.slug}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: idx * 0.08 }}
+                  className="opacity-100 transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <Link
                     href={`/blog/${article.slug}`}
-                    className="group flex flex-col justify-between rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5]/70 overflow-hidden hover:shadow-[0_16px_35px_rgba(160,155,124,0.18)] hover:-translate-y-1 transition-all duration-300 text-center"
+                    className="group flex flex-col justify-between rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5]/70 overflow-hidden hover:shadow-[0_16px_35px_rgba(160,155,124,0.18)] transition-all duration-300 text-center select-none"
                   >
                     <div>
-                      {/* Article Cover Image */}
+                      {/* Article Cover Image with permanent dental editorial graphic fallback */}
                       <div className="relative aspect-16/10 w-full bg-[#E8E2D5]/40 overflow-hidden">
+                        {/* Botanical Dental Aesthetic Fallback */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-tr from-[#A09B7C]/20 via-[#F7F4EE] to-[#D8AE98]/20">
+                          <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" className="w-16 h-16 text-[#A09B7C] opacity-40">
+                            <path d="M40 10C28 10 20 18 20 30c0 10 5 22 7 32 1.5 7 6 10 13 10s11.5-3 13-10c2-10 7-22 7-32 0-12-8-20-20-20z" strokeWidth="2" />
+                            <path d="M30 40h20" strokeWidth="1.5" />
+                          </svg>
+                        </div>
+
                         <Image
                           src={article.image}
                           alt={article.title}
                           fill
                           sizes="(max-width: 640px) 100vw, 25vw"
-                          className="object-cover group-hover:scale-104 transition-transform duration-500"
+                          className="object-cover group-hover:scale-104 transition-transform duration-500 relative z-10"
                           referrerPolicy="no-referrer"
                         />
                       </div>
@@ -122,7 +127,7 @@ export function HomeJournal({ posts = [] }: HomeJournalProps) {
                       <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
 

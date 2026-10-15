@@ -154,13 +154,10 @@ export function HomeServices({ services = [] }: HomeServicesProps) {
           {/* Left Column: 8 Minimalist Icon Cards Grid (Matching image.png) */}
           <div className="lg:col-span-8 lg:col-start-1 order-2 lg:order-1">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {defaultServices.map((service, idx) => (
-                <motion.div
+              {defaultServices.map((service) => (
+                <div
                   key={service.slug}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: idx * 0.05 }}
+                  className="opacity-100 transition-all duration-300 transform hover:-translate-y-1"
                 >
                   <Link
                     href={`/services/${service.slug}`}
@@ -181,7 +178,7 @@ export function HomeServices({ services = [] }: HomeServicesProps) {
                       <ChevronLeft className="w-4 h-4" />
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
