@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: var(--font-vazirmatn), "Vazirmatn", sans-serif;
   --color-primary: #A09B7C;
   --color-primary-hover: #7F795D;
   --color-primary-active: #625D45;

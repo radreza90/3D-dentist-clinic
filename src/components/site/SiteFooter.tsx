@@ -127,14 +127,14 @@ export function SiteFooter() {
           <div className="md:col-span-4 flex flex-col space-y-3 text-xs text-[#817C70]">
             <div className="flex items-center gap-3">
               <Phone className="w-4 h-4 text-[#A09B7C] shrink-0" />
-              <a href="tel:02112345678" className="hover:text-[#302A21] dir-ltr font-mono font-medium">
+              <a href="tel:02112345678" className="hover:text-[#302A21] dir-ltr font-medium text-sm">
                 ۰۲۱-۱۲۳۴۵۶۷۸
               </a>
             </div>
 
             <div className="flex items-center gap-3">
               <Smartphone className="w-4 h-4 text-[#A09B7C] shrink-0" />
-              <a href="tel:09123456789" className="hover:text-[#302A21] dir-ltr font-mono font-medium">
+              <a href="tel:09123456789" className="hover:text-[#302A21] dir-ltr font-medium text-sm">
                 ۰۹۱۲۳۴۵۶۷۸۹
               </a>
             </div>
@@ -178,10 +178,11 @@ export function SiteFooter() {
                   href="https://maps.google.com" 
                   target="_blank" 
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-white bg-[#625D45] hover:bg-[#7F795D] transition-colors shadow-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold !text-white bg-[#625D45] hover:bg-[#7F795D] transition-colors shadow-sm"
+                  style={{ color: "#ffffff" }}
                 >
-                  <Map className="w-3.5 h-3.5" />
-                  <span>مسیریابی با گوگل مپ</span>
+                  <Map className="w-3.5 h-3.5 text-white" style={{ color: "#ffffff" }} />
+                  <span className="!text-white font-semibold text-white" style={{ color: "#ffffff" }}>مسیریابی با گوگل مپ</span>
                 </a>
               </div>
 

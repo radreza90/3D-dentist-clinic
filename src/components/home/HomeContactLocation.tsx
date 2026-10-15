@@ -82,9 +82,9 @@ export function HomeContactLocation() {
                     <span>خطوط تلفن مستقیم</span>
                   </div>
                   <div className="space-y-1 text-xs text-[#817C70] pr-6">
-                    <p>پذیرش اصلی: <a href="tel:02188880120" className="dir-ltr font-bold text-[#302A21] hover:text-[#625D45] font-mono">۰۲۱-۸۸۸۸۰۱۲۰</a></p>
-                    <p>مشاوره فوری: <a href="tel:02188880121" className="dir-ltr font-bold text-[#302A21] hover:text-[#625D45] font-mono">۰۲۱-۸۸۸۸۰۱۲۱</a></p>
-                    <p>پشتیبانی مراجعین: <span className="dir-ltr font-bold text-[#625D45] font-mono">۰۹۱۲-۰۰۰۰۰۰۰</span></p>
+                    <p>پذیرش اصلی: <a href="tel:02188880120" className="dir-ltr font-bold text-[#302A21] hover:text-[#625D45]">۰۲۱-۸۸۸۸۰۱۲۰</a></p>
+                    <p>مشاوره فوری: <a href="tel:02188880121" className="dir-ltr font-bold text-[#302A21] hover:text-[#625D45]">۰۲۱-۸۸۸۸۰۱۲۱</a></p>
+                    <p>پشتیبانی مراجعین: <span className="dir-ltr font-bold text-[#625D45]">۰۹۱۲-۰۰۰۰۰۰۰</span></p>
                   </div>
                 </div>
 

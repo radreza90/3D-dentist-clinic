@@ -47,6 +47,15 @@ export function HomeJournal({ posts = [] }: HomeJournalProps) {
     },
   ];
 
+  const displayArticles = posts && posts.length > 0
+    ? posts.slice(0, 3).map((p, idx) => ({
+        slug: p.slug || defaultArticles[idx]?.slug || `post-${idx}`,
+        title: typeof p.title === "string" ? p.title : (p.title?.fa || defaultArticles[idx]?.title || ""),
+        date: p.date || defaultArticles[idx]?.date || "۱۴۰۳/۰۶/۱۵",
+        image: p.image || defaultArticles[idx]?.image || defaultArticles[0].image,
+      }))
+    : defaultArticles;
+
   return (
     <section id="journal" className="py-24 sm:py-32 relative bg-[#F7F4EE] overflow-hidden text-right">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -79,19 +88,19 @@ export function HomeJournal({ posts = [] }: HomeJournalProps) {
           {/* Left Column in RTL: 3 Article Cards + Navigation Buttons (Matching image.png) */}
           <div className="lg:col-span-8 lg:col-start-1 order-2 lg:order-1 relative">
             
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {defaultArticles.map((article) => (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-stretch">
+              {displayArticles.map((article) => (
                 <div
                   key={article.slug}
-                  className="opacity-100 transition-all duration-300 transform hover:-translate-y-1"
+                  className="opacity-100 transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col"
                 >
                   <Link
                     href={`/blog/${article.slug}`}
-                    className="group flex flex-col justify-between rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5]/70 overflow-hidden hover:shadow-[0_16px_35px_rgba(160,155,124,0.18)] transition-all duration-300 text-center select-none"
+                    className="group flex flex-col justify-between rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5]/70 overflow-visible hover:shadow-[0_16px_35px_rgba(160,155,124,0.18)] transition-all duration-300 text-center select-none h-full relative"
                   >
-                    <div>
+                    <div className="flex-1 flex flex-col">
                       {/* Article Cover Image with permanent dental editorial graphic fallback */}
-                      <div className="relative aspect-16/10 w-full bg-[#E8E2D5]/40 overflow-hidden">
+                      <div className="relative aspect-16/10 w-full bg-[#E8E2D5]/40 overflow-hidden shrink-0 rounded-t-2xl">
                         {/* Botanical Dental Aesthetic Fallback */}
                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-tr from-[#A09B7C]/20 via-[#F7F4EE] to-[#D8AE98]/20">
                           <svg viewBox="0 0 80 80" fill="none" stroke="currentColor" className="w-16 h-16 text-[#A09B7C] opacity-40">
@@ -111,18 +120,48 @@ export function HomeJournal({ posts = [] }: HomeJournalProps) {
                       </div>
 
                       {/* Title & Date */}
-                      <div className="p-4 space-y-2">
-                        <h3 className="text-xs sm:text-sm font-bold text-[#302A21] group-hover:text-[#625D45] transition-colors line-clamp-2 leading-snug">
-                          {article.title}
-                        </h3>
-                        <p className="text-[11px] text-[#817C70] font-mono">
-                          {article.date}
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        {/* Title with strict 2-line clamp and SEO preservation */}
+                        <div className="relative group/title cursor-help">
+                          <h3 
+                            className="text-xs sm:text-sm font-bold text-[#302A21] group-hover:text-[#625D45] transition-colors line-clamp-2 leading-snug h-10 sm:h-11 text-center"
+                            title={article.title}
+                            style={{
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden"
+                            }}
+                          >
+                            {article.title}
+                          </h3>
+
+                          {/* Full Title Floating Tooltip on Hover for Long Titles */}
+                          <div 
+                            role="tooltip"
+                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[240px] sm:max-w-[280px] px-3 py-2 rounded-xl bg-[#241E17] text-white text-[11px] sm:text-xs font-medium leading-relaxed text-center shadow-xl opacity-0 pointer-events-none group-hover/title:opacity-100 transition-all duration-200 z-50 border border-white/10"
+                          >
+                            <span style={{ fontFamily: "var(--font-vazirmatn), Vazirmatn, sans-serif" }}>
+                              {article.title}
+                            </span>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#241E17]" />
+                          </div>
+                        </div>
+
+                        {/* Date rendered strictly in site font (Vazirmatn) */}
+                        <p 
+                          className="text-xs text-[#817C70] font-normal"
+                          style={{ fontFamily: "var(--font-vazirmatn), Vazirmatn, sans-serif" }}
+                        >
+                          <span style={{ fontFamily: "var(--font-vazirmatn), Vazirmatn, sans-serif" }}>
+                            {article.date}
+                          </span>
                         </p>
                       </div>
                     </div>
 
                     {/* Bottom Link Affordance */}
-                    <div className="px-4 pb-4 pt-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#A09B7C] group-hover:text-[#625D45] transition-colors">
+                    <div className="px-4 pb-4 pt-2.5 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#A09B7C] group-hover:text-[#625D45] transition-colors mt-auto border-t border-[#E8E2D5]/30">
                       <span>مطالعه بیشتر</span>
                       <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
                     </div>

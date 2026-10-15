@@ -156,16 +156,17 @@ export function HomeTechnology() {
 
           {/* Left Column: Spatial Visual Anchor & 3D Stage Callout */}
           <div className="lg:col-span-6 flex flex-col items-center justify-center order-1 lg:order-2">
-            <div className="relative w-full max-w-lg aspect-square rounded-3xl bg-white/50 backdrop-blur-md border border-[#E8E2D5] flex flex-col items-center justify-center p-8 text-center shadow-lg shadow-[#241E17]/5 overflow-hidden">
+            <div className="relative w-full max-w-lg aspect-square flex flex-col items-center justify-center p-4 sm:p-8 text-center">
               
-              {/* Concentric Decorative Architectural Rings */}
-              <div className="absolute inset-0 rounded-full border border-[#E8E2D5]/80 pointer-events-none" />
-              <div className="absolute inset-8 rounded-full border border-dashed border-[#A09B7C]/40 pointer-events-none" />
-              <div className="absolute inset-16 rounded-full border border-[#D8AE98]/30 pointer-events-none" />
+              {/* Concentric Circular Dashed Rings in Background */}
+              <div className="absolute inset-0 rounded-full border border-dashed border-[#A09B7C]/45 pointer-events-none" />
+              <div className="absolute inset-8 rounded-full border border-dashed border-[#A09B7C]/35 pointer-events-none" />
+              <div className="absolute inset-16 rounded-full border border-dashed border-[#D8AE98]/40 pointer-events-none" />
+              <div className="absolute inset-28 rounded-full border border-dashed border-[#A09B7C]/25 pointer-events-none" />
 
               {/* High-Tech Precision Telemetry Display */}
               <div className="relative z-10 space-y-5 max-w-sm w-full">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-[#E8E2D5] text-xs font-semibold text-[#625D45] shadow-sm">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#A09B7C]/15 text-xs font-semibold text-[#625D45]">
                   <Sparkles className="w-3.5 h-3.5 text-[#D8AE98]" />
                   <span>دقت دیجیتال · {features[activeFeature].badge}</span>
                 </div>

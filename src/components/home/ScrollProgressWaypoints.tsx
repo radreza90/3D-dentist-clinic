@@ -5,13 +5,12 @@ import { motion } from "motion/react";
 
 const SECTIONS = [
   { id: "hero", label: "سفر لبخند", num: "۰۱" },
-  { id: "stats", label: "آمار کلینیک", num: "۰۲" },
-  { id: "technology", label: "تکنولوژی دیجیتال", num: "۰۳" },
+  { id: "technology", label: "تکنولوژی دیجیتال", num: "۰۲" },
+  { id: "booking", label: "نوبت‌دهی آنلاین", num: "۰۳" },
   { id: "services", label: "خدمات تخصصی", num: "۰۴" },
   { id: "doctors", label: "پزشکان متخصص", num: "۰۵" },
   { id: "portfolio", label: "نمونه‌کارها", num: "۰۶" },
   { id: "journal", label: "مجله سلامت", num: "۰۷" },
-  { id: "booking", label: "نوبت‌دهی آنلاین", num: "۰۸" },
 ];
 
 export function ScrollProgressWaypoints() {
@@ -86,9 +85,9 @@ export function ScrollProgressWaypoints() {
                   : "w-1.5 h-1.5 bg-[#817C70]/40 group-hover:bg-[#A09B7C] group-hover:scale-110"
               }`} />
 
-              {/* Hover Tooltip Label */}
-              <div className="absolute right-6 px-2.5 py-1 rounded-md bg-[#FCFAF6] border border-[#E8E2D5] text-[11px] font-semibold text-[#302A21] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-sm flex items-center gap-1.5">
-                <span className="font-mono text-[#A09B7C]">{s.num}</span>
+              {/* Hover Tooltip Label - Positioned to the right of the dot */}
+              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-[#FCFAF6] border border-[#E8E2D5] text-xs font-medium text-[#302A21] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-sm flex items-center gap-2">
+                <span className="text-[#A09B7C] font-semibold">{s.num}</span>
                 <span>{s.label}</span>
               </div>
             </button>
@@ -97,8 +96,8 @@ export function ScrollProgressWaypoints() {
       </div>
 
       {/* Percentage Indicator */}
-      <div className="text-[10px] font-mono text-[#817C70] tracking-tighter pt-1">
-        {scrollPercent}٪
+      <div className="text-[11px] font-medium text-[#817C70] pt-1">
+        {scrollPercent.toLocaleString("fa-IR")}٪
       </div>
 
     </div>

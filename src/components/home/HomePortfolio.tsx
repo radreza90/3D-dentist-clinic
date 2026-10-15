@@ -85,9 +85,10 @@ export function HomePortfolio() {
             <div className="pt-2">
               <Link
                 href="/portfolio"
-                className="inline-flex items-center justify-center px-6 py-2.5 rounded-full text-xs font-semibold text-white bg-[#625D45] hover:bg-[#7F795D] transition-all duration-200 shadow-sm"
+                className="inline-flex items-center justify-center px-6 py-2.5 rounded-full text-xs font-semibold !text-white bg-[#625D45] hover:bg-[#7F795D] transition-all duration-200 shadow-sm"
+                style={{ color: "#ffffff" }}
               >
-                <span>مشاهده همه نمونه کارها</span>
+                <span className="!text-white font-semibold text-white" style={{ color: "#ffffff" }}>مشاهده همه نمونه کارها</span>
               </Link>
             </div>
           </div>

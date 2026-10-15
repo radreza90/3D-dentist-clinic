@@ -8,7 +8,6 @@ import { HomePortfolio } from "@/components/home/HomePortfolio";
 import { HomeJournal } from "@/components/home/HomeJournal";
 import { HomeBookingWidget } from "@/components/home/HomeBookingWidget";
 import { HomeFaq } from "@/components/home/HomeFaq";
-import { HomeStats } from "@/components/home/HomeStats";
 import { ScrollProgressWaypoints } from "@/components/home/ScrollProgressWaypoints";
 
 export const dynamic = "force-dynamic";
@@ -92,26 +91,23 @@ export default async function HomePage() {
       {/* ۱. هیرو تمام‌صفحه با پس‌زمینه کلینیک و ویژوال انیمیشنی سفر لبخند */}
       <HomeHero />
 
-      {/* ۲. شاخص‌ها و شمارنده‌های پویای کلینیک */}
-      <HomeStats />
-
-      {/* ۳. بخش تکنولوژی و دقت میکرونی دیجیتال */}
+      {/* ۲. بخش تکنولوژی و دقت میکرونی دیجیتال */}
       <HomeTechnology />
 
-      {/* ۳. بخش خدمات تخصصی با گرید آیکونی */}
+      {/* ۳. ویجت نوبت‌دهی آنلاین اختصاصی کلینیک */}
+      <HomeBookingWidget />
+
+      {/* ۴. بخش خدمات تخصصی با گرید آیکونی */}
       <HomeServices services={formattedServices} />
 
-      {/* ۴. کادر دندانپزشکان مجرب و دلسوز */}
+      {/* ۵. کادر دندانپزشکان مجرب و دلسوز */}
       <HomeDoctors doctors={formattedDoctors} />
 
-      {/* ۵. گالری و اسلایدر مقایسه‌ای Before & After */}
+      {/* ۶. گالری و اسلایدر مقایسه‌ای Before & After */}
       <HomePortfolio />
 
-      {/* ۶. مجله و مقالات سلامت دهان و دندان */}
+      {/* ۷. مجله و مقالات سلامت دهان و دندان */}
       <HomeJournal posts={formattedPosts} />
-
-      {/* ۷. ویجت نوبت‌دهی آنلاین اختصاصی کلینیک */}
-      <HomeBookingWidget />
 
       {/* ۸. پاسخ به پرسش‌های متداول بالینی */}
       <HomeFaq />
