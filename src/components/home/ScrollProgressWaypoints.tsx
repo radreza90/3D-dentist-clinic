@@ -3,19 +3,20 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 
+const SECTIONS = [
+  { id: "hero", label: "سفر لبخند", num: "۰۱" },
+  { id: "stats", label: "آمار کلینیک", num: "۰۲" },
+  { id: "technology", label: "تکنولوژی دیجیتال", num: "۰۳" },
+  { id: "services", label: "خدمات تخصصی", num: "۰۴" },
+  { id: "doctors", label: "پزشکان متخصص", num: "۰۵" },
+  { id: "portfolio", label: "نمونه‌کارها", num: "۰۶" },
+  { id: "journal", label: "مجله سلامت", num: "۰۷" },
+  { id: "booking", label: "نوبت‌دهی آنلاین", num: "۰۸" },
+];
+
 export function ScrollProgressWaypoints() {
   const [activeSection, setActiveSection] = useState("hero");
   const [scrollPercent, setScrollPercent] = useState(0);
-
-  const sections = [
-    { id: "hero", label: "هیرو", num: "۰۱" },
-    { id: "technology", label: "تکنولوژی ۳D", num: "۰۲" },
-    { id: "services", label: "خدمات", num: "۰۳" },
-    { id: "doctors", label: "پزشکان", num: "۰۴" },
-    { id: "portfolio", label: "نمونه‌کارها", num: "۰۵" },
-    { id: "journal", label: "مقالات", num: "۰۶" },
-    { id: "booking", label: "نوبت‌دهی", num: "۰۷" },
-  ];
 
   useEffect(() => {
     const onScroll = () => {
@@ -26,7 +27,7 @@ export function ScrollProgressWaypoints() {
       }
 
       // Detect which section is currently in view
-      const sectionElements = sections.map((s) => ({
+      const sectionElements = SECTIONS.map((s) => ({
         id: s.id,
         el: document.getElementById(s.id),
       }));
@@ -68,7 +69,7 @@ export function ScrollProgressWaypoints() {
 
       {/* Section Dots with Persian Numerals */}
       <div className="flex flex-col items-center gap-3 pointer-events-auto">
-        {sections.map((s) => {
+        {SECTIONS.map((s) => {
           const isActive = activeSection === s.id;
           return (
             <button
@@ -85,7 +86,7 @@ export function ScrollProgressWaypoints() {
                   : "w-1.5 h-1.5 bg-[#817C70]/40 group-hover:bg-[#A09B7C] group-hover:scale-110"
               }`} />
 
-              {/* Hover Tooltip Label (Floating to the right in LTR coordinate / towards center) */}
+              {/* Hover Tooltip Label */}
               <div className="absolute right-6 px-2.5 py-1 rounded-md bg-[#FCFAF6] border border-[#E8E2D5] text-[11px] font-semibold text-[#302A21] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-sm flex items-center gap-1.5">
                 <span className="font-mono text-[#A09B7C]">{s.num}</span>
                 <span>{s.label}</span>

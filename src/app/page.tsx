@@ -8,6 +8,7 @@ import { HomePortfolio } from "@/components/home/HomePortfolio";
 import { HomeJournal } from "@/components/home/HomeJournal";
 import { HomeBookingWidget } from "@/components/home/HomeBookingWidget";
 import { HomeFaq } from "@/components/home/HomeFaq";
+import { HomeStats } from "@/components/home/HomeStats";
 import { ScrollProgressWaypoints } from "@/components/home/ScrollProgressWaypoints";
 
 export const dynamic = "force-dynamic";
@@ -88,10 +89,13 @@ export default async function HomePage() {
       {/* ناوبری ظریف ستونی نقاط اسکرول */}
       <ScrollProgressWaypoints />
 
-      {/* ۱. هیرو تمام‌صفحه با پس‌زمینه کلینیک و کادر سه‌بعدی */}
+      {/* ۱. هیرو تمام‌صفحه با پس‌زمینه کلینیک و ویژوال انیمیشنی سفر لبخند */}
       <HomeHero />
 
-      {/* ۲. بخش تکنولوژی و دقت میکرونی سه‌بعدی (اسکرول تریگر دندان) */}
+      {/* ۲. شاخص‌ها و شمارنده‌های پویای کلینیک */}
+      <HomeStats />
+
+      {/* ۳. بخش تکنولوژی و دقت میکرونی دیجیتال */}
       <HomeTechnology />
 
       {/* ۳. بخش خدمات تخصصی با گرید آیکونی */}

@@ -4,9 +4,9 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { 
   CalendarCheck, 
-  ArrowLeft
+  ArrowLeft 
 } from "lucide-react";
-import { ScrollToothCanvas } from "./ScrollToothCanvas";
+import { HomeHeroNarrative } from "./HomeHeroNarrative";
 
 export function HomeHero() {
   return (
@@ -86,11 +86,9 @@ export function HomeHero() {
 
           </div>
 
-          {/* Left Column (Second in RTL): Seamless 3D Molar Tooth - Boundless & Fully Integrated with Hero */}
+          {/* Left Column (Second in RTL): 2D Animated Smile Architecture & Journey Showcase */}
           <div className="col-span-12 lg:col-span-7 flex items-center justify-center order-2 pointer-events-auto">
-            <div className="w-full h-[380px] sm:h-[460px] lg:h-[540px] xl:h-[600px] flex items-center justify-center overflow-visible">
-              <ScrollToothCanvas />
-            </div>
+            <HomeHeroNarrative />
           </div>
 
         </div>
