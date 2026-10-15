@@ -1,6 +1,6 @@
 {
-  "summary": "برنامه جامع رفع مشکل ناپدید شدن المان‌ها (پایداری کامل نمایش بدون opacity: 0) و ارتقای چشمگیر اسکرول‌تریگر مدل سه‌بعدی دندان و پایبندی صددرصدی به ذخیره‌سازی داده در پایگاه داده MongoDB.",
-  "updatedAt": "2026-10-15T09:43:27.415288451Z",
+  "summary": "Implementation plan for seamless integration of the 3D GLB molar tooth model in the Hero section without box containers, featuring physical ceramic enamel lighting, auto-rotation, scroll-driven kinematics, and soft exit fade.",
+  "updatedAt": "2026-10-15T11:15:56.823281379Z",
   "requestFeedback": true,
   "userFacing": true
 }

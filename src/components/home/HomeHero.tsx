@@ -43,21 +43,8 @@ export function HomeHero() {
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-12 sm:pt-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
-          {/* Left Column (Columns 1-7 on desktop, centered on mobile): Prominent 3D Interactive Tooth */}
-          <div className="col-span-12 lg:col-span-7 flex flex-col items-center justify-center order-2 lg:order-1 pointer-events-auto">
-            <div className="relative w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[520px] h-[340px] sm:h-[400px] lg:h-[480px] flex items-center justify-center">
-              <ScrollToothCanvas variant="hero" />
-            </div>
-
-            {/* Delicate Interactive Drag & Scroll Indicator */}
-            <div className="mt-1 sm:mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-white/90 text-xs font-medium shadow-md select-none transition-transform hover:scale-105">
-              <span className="w-2 h-2 rounded-full bg-[#D8AE98] animate-ping" />
-              <span>مدل سه‌بعدی تعاملی · چرخش ۳۶۰ درجه با درگ ماوس و اسکرول</span>
-            </div>
-          </div>
-
-          {/* Right Column: Hero Typography & CTA Buttons */}
-          <div className="col-span-12 lg:col-span-5 order-1 lg:order-2 flex flex-col items-start text-right space-y-5">
+          {/* Right Column (First in RTL): Hero Typography & CTA Buttons */}
+          <div className="col-span-12 lg:col-span-5 flex flex-col items-start text-right space-y-5 order-1">
             
             {/* Kicker */}
             <div className="text-xs sm:text-sm font-semibold tracking-wide text-[#D8AE98] opacity-100 transition-opacity">
@@ -97,6 +84,13 @@ export function HomeHero() {
               </a>
             </div>
 
+          </div>
+
+          {/* Left Column (Second in RTL): Seamless 3D Molar Tooth - Boundless & Fully Integrated with Hero */}
+          <div className="col-span-12 lg:col-span-7 flex items-center justify-center order-2 pointer-events-auto">
+            <div className="w-full h-[380px] sm:h-[460px] lg:h-[540px] xl:h-[600px] flex items-center justify-center overflow-visible">
+              <ScrollToothCanvas />
+            </div>
           </div>
 
         </div>

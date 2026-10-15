@@ -11,7 +11,6 @@ import {
   ArrowUpRight 
 } from "lucide-react";
 import Link from "next/link";
-import { ScrollToothCanvas } from "./ScrollToothCanvas";
 
 export function HomeTechnology() {
   const [activeFeature, setActiveFeature] = useState(0);
@@ -157,29 +156,57 @@ export function HomeTechnology() {
 
           {/* Left Column: Spatial Visual Anchor & 3D Stage Callout */}
           <div className="lg:col-span-6 flex flex-col items-center justify-center order-1 lg:order-2">
-            <div className="relative w-full max-w-lg aspect-square rounded-3xl flex flex-col items-center justify-center p-8 text-center">
+            <div className="relative w-full max-w-lg aspect-square rounded-3xl bg-white/50 backdrop-blur-md border border-[#E8E2D5] flex flex-col items-center justify-center p-8 text-center shadow-lg shadow-[#241E17]/5 overflow-hidden">
               
               {/* Concentric Decorative Architectural Rings */}
               <div className="absolute inset-0 rounded-full border border-[#E8E2D5]/80 pointer-events-none" />
               <div className="absolute inset-8 rounded-full border border-dashed border-[#A09B7C]/40 pointer-events-none" />
               <div className="absolute inset-16 rounded-full border border-[#D8AE98]/30 pointer-events-none" />
 
-              {/* The fixed 3D canvas hovers seamlessly right in this space on desktop scroll! */}
-              <div className="relative z-10 space-y-4 max-w-sm">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-[#E8E2D5] text-xs font-semibold text-[#625D45] shadow-sm">
+              {/* High-Tech Precision Telemetry Display */}
+              <div className="relative z-10 space-y-5 max-w-sm w-full">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-[#E8E2D5] text-xs font-semibold text-[#625D45] shadow-sm">
                   <Sparkles className="w-3.5 h-3.5 text-[#D8AE98]" />
-                  <span>اسکن آناتومیک زنده · تحلیل تاج و ریشه</span>
+                  <span>دقت دیجیتال · {features[activeFeature].badge}</span>
                 </div>
 
-                <div className="w-full h-52 sm:h-60 flex items-center justify-center my-2 pointer-events-auto">
-                  <ScrollToothCanvas variant="tech" />
+                {/* Laser & Telemetry Radar Graphic */}
+                <div className="w-full h-44 sm:h-48 rounded-2xl bg-[#241E17] text-white p-5 flex flex-col justify-between relative overflow-hidden shadow-inner">
+                  <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-[#D8AE98]/10 blur-xl pointer-events-none" />
+                  
+                  {/* Top Bar */}
+                  <div className="flex items-center justify-between text-[11px] text-white/60 font-mono">
+                    <span className="flex items-center gap-1.5 text-[#D8AE98]">
+                      <span className="w-2 h-2 rounded-full bg-[#D8AE98] animate-pulse" />
+                      MICRON_SCAN: ACTIVE
+                    </span>
+                    <span>TOLERANCE: ±0.01mm</span>
+                  </div>
+
+                  {/* Center Telemetry Waveform */}
+                  <div className="py-2 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl sm:text-3xl font-bold font-mono text-[#F7F4EE] tracking-wider">
+                        99.8%
+                      </div>
+                      <div className="text-[11px] text-[#A09B7C] mt-0.5">
+                        {features[activeFeature].title}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Specs micro-grid */}
+                  <div className="grid grid-cols-2 gap-2 text-[10px] text-white/70 border-t border-white/10 pt-2 font-mono">
+                    <div>SPEED: 4,500 fps</div>
+                    <div className="text-left">AXIS: 5-AXIS CNC</div>
+                  </div>
                 </div>
 
                 <p className="text-xs text-[#817C70] leading-relaxed">
-                  با اسکرول در این بخش، زاویه دندان برای نمایش شیارهای اکلوزال و لایه‌های مینا تغییر می‌کند.
+                  {features[activeFeature].description}
                 </p>
 
-                <div className="pt-2">
+                <div className="pt-1">
                   <Link
                     href="#booking"
                     className="inline-flex items-center gap-2 text-xs font-semibold text-[#625D45] hover:text-[#302A21] transition-colors"

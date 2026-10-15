@@ -8,7 +8,6 @@ import { HomePortfolio } from "@/components/home/HomePortfolio";
 import { HomeJournal } from "@/components/home/HomeJournal";
 import { HomeBookingWidget } from "@/components/home/HomeBookingWidget";
 import { HomeFaq } from "@/components/home/HomeFaq";
-import { ScrollToothCanvas } from "@/components/home/ScrollToothCanvas";
 import { ScrollProgressWaypoints } from "@/components/home/ScrollProgressWaypoints";
 
 export const dynamic = "force-dynamic";
