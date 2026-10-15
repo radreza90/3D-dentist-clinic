@@ -10,62 +10,57 @@ interface ScrollToothCanvasProps {
 
 export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
     const container = containerRef.current;
-    if (!canvas || !container) return;
+    if (!container) return;
 
     let destroyed = false;
     let animId: number;
 
-    // Dimensions helper
-    const getDims = () => {
-      const rect = container.getBoundingClientRect();
-      const w = Math.max(Math.floor(rect.width || 520), 280);
-      const h = Math.max(Math.floor(rect.height || 520), 280);
-      return { w, h };
-    };
-
-    const { w, h } = getDims();
-
-    // 1. WebGL Context Query
-    let gl: WebGLRenderingContext | WebGL2RenderingContext | null = null;
-    try {
-      gl = (canvas.getContext("webgl2", { alpha: true, antialias: true }) ||
-            canvas.getContext("webgl", { alpha: true, antialias: true })) as WebGLRenderingContext | null;
-    } catch {
-      gl = null;
+    // Safety: ensure no duplicate canvas elements on re-mount
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
     }
 
-    if (!gl) {
-      return;
-    }
+    // Measure container bounds
+    const rect = container.getBoundingClientRect();
+    const w = Math.max(Math.floor(rect.width || 560), 300);
+    const h = Math.max(Math.floor(rect.height || 560), 300);
 
-    // 2. High-performance Transparent WebGL Renderer
-    let renderer: THREE.WebGLRenderer | null = null;
+    // 1. Initialize WebGL Renderer
+    let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
-        canvas,
-        context: gl,
         antialias: true,
         alpha: true,
         powerPreference: "high-performance",
       });
-      renderer.setClearColor(0x000000, 0); // 100% transparent background
+      renderer.setClearColor(0x000000, 0); // Transparent background
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer.setSize(w, h, false);
+      renderer.setSize(w, h, true);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.3;
-    } catch {
+      renderer.toneMappingExposure = 1.35;
+    } catch (e) {
+      console.error("WebGL Renderer initialization error:", e);
       return;
     }
 
-    // 3. Scene & Camera Setup
+    const canvas = renderer.domElement;
+    canvas.className = "relative z-10 w-full h-full block bg-transparent cursor-grab active:cursor-grabbing transition-opacity duration-300";
+    canvas.setAttribute("aria-label", "مدل سه‌بعدی دندان کلینیک");
+    container.appendChild(canvas);
+
+    // Prevent default context lost handler
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+    };
+    canvas.addEventListener("webglcontextlost", onContextLost);
+
+    // 2. Scene & Camera Setup
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
-    camera.position.set(0, 0, 7.5);
+    const camera = new THREE.PerspectiveCamera(36, w / h, 0.1, 100);
+    camera.position.set(0, 0, 7.2);
 
     const rootGroup = new THREE.Group();
     scene.add(rootGroup);
@@ -73,77 +68,74 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
     const toothGroup = new THREE.Group();
     rootGroup.add(toothGroup);
 
-    // Initial anatomical pose: slight natural tilt
-    toothGroup.rotation.x = 0.14;
-    toothGroup.rotation.y = -0.3;
 
-    // 4. Studio Multi-Light Rig for Maximum 3D Depth & Ceramic Sheen
-    // Gentle warm ambient light (keeps deep form without washing out geometry)
-    const ambientLight = new THREE.AmbientLight(0xfff8ee, 0.75);
+    // Initial natural anatomical orientation
+    toothGroup.rotation.x = 0.12;
+    toothGroup.rotation.y = -0.25;
+
+    // 3. Studio Multi-Light Rig (Opaque Ceramic Enamel with Sculpted 3D Depth)
+    const ambientLight = new THREE.AmbientLight(0xfff8ee, 1.8);
     scene.add(ambientLight);
 
-    // Primary Key Light (bright studio light casting specular highlights on crown cusps)
-    const keyLight = new THREE.DirectionalLight(0xfffaf0, 3.2);
-    keyLight.position.set(4.5, 6, 4.5);
+    // Front-Key Light - bright studio illumination
+    const keyLight = new THREE.DirectionalLight(0xfffaf0, 3.6);
+    keyLight.position.set(4, 5, 4.5);
     scene.add(keyLight);
 
-    // Secondary Fill Light (subtle cool dental operatory fill from the left)
-    const fillLight = new THREE.DirectionalLight(0xe8f0f8, 1.4);
-    fillLight.position.set(-4.5, 1.5, 3);
+    // Fill Light - soft operatory fill
+    const fillLight = new THREE.DirectionalLight(0xe8f0f8, 2.2);
+    fillLight.position.set(-4, 2, 3.5);
     scene.add(fillLight);
 
-    // Luminous Rose Gold Rim Light (sculpts the silhouette of roots and crown against dark background)
-    const rimLight = new THREE.DirectionalLight(0xd8ae98, 3.8);
-    rimLight.position.set(1.5, -2.5, -4.5);
+    // Frontal Direct Fill - ensures front geometry is crisp and bright
+    const frontLight = new THREE.DirectionalLight(0xfffdfa, 2.0);
+    frontLight.position.set(0, 0, 6);
+    scene.add(frontLight);
+
+    // Rim Light - rose gold / bronze luminous edge outline
+    const rimLight = new THREE.DirectionalLight(0xd8ae98, 4.2);
+    rimLight.position.set(1.5, -2, -5);
     scene.add(rimLight);
 
-    // Top Crown Specular Accent
-    const topAccent = new THREE.PointLight(0xffffff, 2.0, 10);
+    // Top Crown Highlight - highlights anatomical occlusal cusps and grooves
+    const topAccent = new THREE.PointLight(0xffffff, 2.4, 14);
     topAccent.position.set(0, 4.5, 1.5);
     scene.add(topAccent);
 
-    // Bottom Root Accent
-    const bottomAccent = new THREE.DirectionalLight(0xf2e8dc, 1.2);
-    bottomAccent.position.set(0, -5, 2);
+    // Bottom Root Highlight
+    const bottomAccent = new THREE.DirectionalLight(0xf2e8dc, 1.5);
+    bottomAccent.position.set(0, -4, 2);
     scene.add(bottomAccent);
 
-    // 5. Ceramic Enamel Physical Materials (Physical depth, translucency, ceramic glaze)
+    // 4. Solid Ceramic Enamel Materials (Opaque, high-gloss clearcoat glaze)
     const crownMaterial = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color(0xfcfaf5),
-      roughness: 0.12,
+      roughness: 0.14,
       metalness: 0.02,
       clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-      transmission: 0.08,
-      thickness: 0.8,
-      ior: 1.52,
+      clearcoatRoughness: 0.06,
       reflectivity: 0.95,
     });
 
-    const cervicalMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0xf6efe2),
-      roughness: 0.22,
+    const cervicalMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(0xf5ede0),
+      roughness: 0.25,
       metalness: 0.02,
-      clearcoat: 0.7,
-      clearcoatRoughness: 0.12,
     });
 
-    const rootMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0xf2e7d5),
-      roughness: 0.28,
+    const rootMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(0xf0e4d2),
+      roughness: 0.32,
       metalness: 0.01,
-      clearcoat: 0.4,
-      clearcoatRoughness: 0.18,
     });
 
-    const saddleMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0xeee3ce),
-      roughness: 0.26,
+    const saddleMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(0xebdcc7),
+      roughness: 0.3,
       metalness: 0.01,
-      clearcoat: 0.45,
     });
 
-    // 6. Instant 3D Procedural Stand-in (Zero blank flash while GLB parses)
+    // 5. Instant 3D Procedural Stand-in (Zero blank flash while GLB parses)
     const proceduralStandin = new THREE.Group();
     toothGroup.add(proceduralStandin);
 
@@ -152,94 +144,109 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
     protoCrown.position.y = 0.6;
     proceduralStandin.add(protoCrown);
 
-    const protoCusp1 = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), crownMaterial);
-    protoCusp1.position.set(0.48, 1.25, 0.48);
-    proceduralStandin.add(protoCusp1);
+    const cuspGeo = new THREE.SphereGeometry(0.42, 16, 16);
+    const cusp1 = new THREE.Mesh(cuspGeo, crownMaterial);
+    cusp1.position.set(0.48, 1.25, 0.48);
+    proceduralStandin.add(cusp1);
 
-    const protoCusp2 = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), crownMaterial);
-    protoCusp2.position.set(-0.48, 1.25, 0.48);
-    proceduralStandin.add(protoCusp2);
+    const cusp2 = new THREE.Mesh(cuspGeo, crownMaterial);
+    cusp2.position.set(-0.48, 1.25, 0.48);
+    proceduralStandin.add(cusp2);
 
-    const protoCusp3 = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), crownMaterial);
-    protoCusp3.position.set(0.48, 1.25, -0.48);
-    proceduralStandin.add(protoCusp3);
+    const cusp3 = new THREE.Mesh(cuspGeo, crownMaterial);
+    cusp3.position.set(0.48, 1.25, -0.48);
+    proceduralStandin.add(cusp3);
 
-    const protoCusp4 = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 16), crownMaterial);
-    protoCusp4.position.set(-0.48, 1.25, -0.48);
-    proceduralStandin.add(protoCusp4);
+    const cusp4 = new THREE.Mesh(cuspGeo, crownMaterial);
+    cusp4.position.set(-0.48, 1.25, -0.48);
+    proceduralStandin.add(cusp4);
 
-    const protoRoot1 = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.6, 20), rootMaterial);
+    const rootGeo1 = new THREE.ConeGeometry(0.42, 1.6, 20);
+    const protoRoot1 = new THREE.Mesh(rootGeo1, rootMaterial);
     protoRoot1.rotation.z = Math.PI;
     protoRoot1.rotation.x = 0.14;
     protoRoot1.position.set(0.42, -0.75, 0);
     proceduralStandin.add(protoRoot1);
 
-    const protoRoot2 = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.6, 20), rootMaterial);
+    const protoRoot2 = new THREE.Mesh(rootGeo1, rootMaterial);
     protoRoot2.rotation.z = Math.PI;
     protoRoot2.rotation.x = -0.14;
     protoRoot2.position.set(-0.42, -0.75, 0);
     proceduralStandin.add(protoRoot2);
 
-    // 7. Load GLB Model (/models/molar-tooth.glb)
-    let gltfModel: THREE.Group | null = null;
+    // 6. Robust GLB Fetch & Parse (/models/molar-tooth.glb)
     const loader = new GLTFLoader();
+    const modelFullUrl = typeof window !== "undefined" 
+      ? new URL("/models/molar-tooth.glb", window.location.href).href 
+      : "/models/molar-tooth.glb";
 
-    loader.load(
-      "/models/molar-tooth.glb",
-      (gltf) => {
+    fetch(modelFullUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.arrayBuffer();
+      })
+      .then((buffer) => {
         if (destroyed) return;
-        gltfModel = gltf.scene;
+        loader.parse(
+          buffer,
+          "",
+          (gltf) => {
+            if (destroyed) return;
+            const gltfModel = gltf.scene;
 
-        // Calculate bounding box and scale to fill hero viewport
-        const box = new THREE.Box3().setFromObject(gltfModel);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        const center = new THREE.Vector3();
-        box.getCenter(center);
+            // Bounding box normalization
+            const box = new THREE.Box3().setFromObject(gltfModel);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
 
-        const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        const targetHeight = 4.0;
-        const scale = targetHeight / maxDim;
-        gltfModel.scale.setScalar(scale);
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            const targetHeight = 4.2;
+            const scale = targetHeight / maxDim;
+            gltfModel.scale.setScalar(scale);
 
-        // Center the tooth model pivot
-        gltfModel.position.x = -center.x * scale;
-        gltfModel.position.y = -center.y * scale;
-        gltfModel.position.z = -center.z * scale;
+            // Center pivot
+            gltfModel.position.x = -center.x * scale;
+            gltfModel.position.y = -center.y * scale;
+            gltfModel.position.z = -center.z * scale;
 
-        // Apply physical ceramic materials to each anatomical segment
-        gltfModel.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            const mesh = child as THREE.Mesh;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+            // Apply ceramic materials to each anatomical segment
+            gltfModel.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh) {
+                const mesh = child as THREE.Mesh;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
 
-            const name = mesh.name.toLowerCase();
-            if (name.includes("crown") || name.includes("enamel")) {
-              mesh.material = crownMaterial;
-            } else if (name.includes("cervical") || name.includes("collar")) {
-              mesh.material = cervicalMaterial;
-            } else if (name.includes("furcation") || name.includes("saddle")) {
-              mesh.material = saddleMaterial;
-            } else if (name.includes("root")) {
-              mesh.material = rootMaterial;
-            } else {
-              mesh.material = crownMaterial;
-            }
+                const name = mesh.name.toLowerCase();
+                if (name.includes("crown") || name.includes("enamel")) {
+                  mesh.material = crownMaterial;
+                } else if (name.includes("cervical") || name.includes("collar")) {
+                  mesh.material = cervicalMaterial;
+                } else if (name.includes("furcation") || name.includes("saddle")) {
+                  mesh.material = saddleMaterial;
+                } else if (name.includes("root")) {
+                  mesh.material = rootMaterial;
+                } else {
+                  mesh.material = crownMaterial;
+                }
+              }
+            });
+
+            // Swap procedural stand-in with real GLB model
+            toothGroup.remove(proceduralStandin);
+            toothGroup.add(gltfModel);
+          },
+          (err) => {
+            console.warn("GLTF parse error:", err);
           }
-        });
+        );
+      })
+      .catch((err) => {
+        console.warn("GLB fetch error, using procedural standin:", err);
+      });
 
-        // Swap procedural stand-in with the real GLB model
-        toothGroup.remove(proceduralStandin);
-        toothGroup.add(gltfModel);
-      },
-      undefined,
-      (err) => {
-        console.warn("Using procedural 3D molar fallback:", err);
-      }
-    );
-
-    // 8. Interactive Mouse & Touch Drag Controls
+    // 7. Interactive Mouse & Touch Drag Controls
     let isDragging = false;
     let prevMouseX = 0;
     let prevMouseY = 0;
@@ -262,9 +269,9 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
       const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
       const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-      const rect = container.getBoundingClientRect();
-      mouseParallaxX = ((clientX - rect.left) / rect.width - 0.5) * 0.35;
-      mouseParallaxY = ((clientY - rect.top) / rect.height - 0.5) * 0.25;
+      const r = container.getBoundingClientRect();
+      mouseParallaxX = ((clientX - r.left) / r.width - 0.5) * 0.35;
+      mouseParallaxY = ((clientY - r.top) / r.height - 0.5) * 0.25;
 
       if (!isDragging) return;
       const deltaX = clientX - prevMouseX;
@@ -290,13 +297,15 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
     window.addEventListener("touchmove", onPointerMove, { passive: true });
     window.addEventListener("touchend", onPointerUp, { passive: true });
 
-    // 9. Resize Handler
+    // 8. Resize Handler
     const handleResize = () => {
       if (destroyed || !renderer) return;
-      const { w: nw, h: nh } = getDims();
+      const r = container.getBoundingClientRect();
+      const nw = Math.max(Math.floor(r.width), 300);
+      const nh = Math.max(Math.floor(r.height), 300);
       camera.aspect = nw / nh;
       camera.updateProjectionMatrix();
-      renderer.setSize(nw, nh, false);
+      renderer.setSize(nw, nh, true);
     };
 
     window.addEventListener("resize", handleResize);
@@ -304,7 +313,7 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
     // Initial render
     renderer.render(scene, camera);
 
-    // 10. Animation Loop: Auto-Rotation, Floating, and Scroll Kinematics
+    // 9. Animation Loop: Auto-Rotation, Floating, and Scroll Kinematics
     const startTime = performance.now();
 
     const animate = () => {
@@ -330,8 +339,7 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
         } else {
           canvas.style.opacity = "0";
           canvas.style.visibility = "hidden";
-          // When completely past Hero, pause GPU draw calls
-          return;
+          return; // pause GPU draw calls outside hero
         }
       }
 
@@ -366,6 +374,7 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
       window.removeEventListener("mouseup", onPointerUp);
       window.removeEventListener("touchmove", onPointerMove);
       window.removeEventListener("touchend", onPointerUp);
+      canvas.removeEventListener("webglcontextlost", onContextLost);
 
       crownMaterial.dispose();
       cervicalMaterial.dispose();
@@ -373,6 +382,8 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
       saddleMaterial.dispose();
 
       protoCrownGeo.dispose();
+      cuspGeo.dispose();
+      rootGeo1.dispose();
 
       toothGroup.traverse((obj) => {
         if ((obj as THREE.Mesh).isMesh) {
@@ -381,8 +392,10 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
         }
       });
 
-      renderer?.dispose();
-      renderer?.forceContextLoss();
+      renderer.dispose();
+      if (container.contains(canvas)) {
+        container.removeChild(canvas);
+      }
     };
   }, []);
 
@@ -390,20 +403,6 @@ export function ScrollToothCanvas({ className = "" }: ScrollToothCanvasProps) {
     <div 
       ref={containerRef}
       className={`relative w-full h-full flex items-center justify-center select-none bg-transparent overflow-visible pointer-events-auto ${className}`}
-    >
-      {/* Delicate warm radial aura seamlessly matching hero luxury atmosphere */}
-      <div 
-        className="absolute inset-0 pointer-events-none rounded-full blur-[90px] opacity-25"
-        style={{
-          background: "radial-gradient(circle at center, #D8AE98 0%, #A09B7C 35%, transparent 70%)"
-        }}
-      />
-      <canvas
-        ref={canvasRef}
-        className="relative w-full h-full block bg-transparent cursor-grab active:cursor-grabbing z-10 transition-opacity duration-300"
-        style={{ opacity: 1 }}
-        aria-label="مدل سه‌بعدی دندان در هیرو"
-      />
-    </div>
+    />
   );
 }
