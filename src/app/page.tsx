@@ -14,7 +14,7 @@ import { SamplePortfolio } from "@/components/sample-home/SamplePortfolio";
 import { SampleVideoDeck } from "@/components/sample-home/SampleVideoDeck";
 import { SampleReviewsMarquee } from "@/components/sample-home/SampleReviewsMarquee";
 import { SampleDoctors } from "@/components/sample-home/SampleDoctors";
-import { SampleBookingWizard } from "@/components/sample-home/SampleBookingWizard";
+import { HomeBookingWidget } from "@/components/home/HomeBookingWidget";
 import { SampleBlog } from "@/components/sample-home/SampleBlog";
 import { SampleCollapsibleGuideFaq } from "@/components/sample-home/SampleCollapsibleGuideFaq";
 
@@ -193,8 +193,8 @@ export default async function HomePage() {
       {/* ۷. معرفی پزشکان (Doctors) */}
       <SampleDoctors doctors={formattedDoctors} />
 
-      {/* ۸. رزرو (Multi-step booking wizard connected to appointments DB) */}
-      <SampleBookingWizard services={formattedServices} />
+      {/* ۸. رزرو نوبت آنلاین دقیقاً مانند کانتینر /home2 متصل به پایگاه داده */}
+      <HomeBookingWidget services={formattedServices} doctors={formattedDoctors} />
 
       {/* ۹. وبلاگ (Blog Journal) */}
       <SampleBlog posts={formattedPosts} />

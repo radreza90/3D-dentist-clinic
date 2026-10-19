@@ -74,14 +74,18 @@ export async function POST(req: Request) {
 
     const slotKey = `${startsAt.toISOString().split("T")[0]}_${startsAt.getUTCHours()}:${startsAt.getUTCMinutes()}_${serviceId}_${phone.slice(-4)}`;
 
-    // Create the appointment without doctor (to be assigned by admin later as requested)
+    // Assign doctor if selected by patient, otherwise null for admin triage
+    const doctorIdToAssign = body.doctorId && body.doctorId !== "any" && /^[a-f\d]{24}$/i.test(String(body.doctorId))
+      ? String(body.doctorId)
+      : null;
+
     const appointment = await AppointmentModel.create({
       patientSnapshot: {
         name,
         phone,
       },
       serviceId: service._id,
-      doctorId: null, // Admin assigns doctor later
+      doctorId: doctorIdToAssign,
       startsAt,
       endsAt,
       timezone: "Asia/Tehran",
