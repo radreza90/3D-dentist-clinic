@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="860" viewBox="0 0 840 860" role="img" aria-label="Illustrative dental concept">
+<defs><linearGradient id="bg" x1="0" x2="1" y1="1" y2="0"><stop stop-color="#292c42"/><stop offset="1" stop-color="#a2abc7"/></linearGradient><radialGradient id="orb"><stop stop-color="#caede5" stop-opacity=".78"/><stop offset="1" stop-color="#caede5" stop-opacity="0"/></radialGradient><filter id="blur"><feGaussianBlur stdDeviation="13"/></filter></defs>
+<rect width="840" height="860" fill="url(#bg)"/>
+<circle cx="178" cy="151" r="360" fill="url(#orb)" filter="url(#blur)"/>
+<circle cx="732" cy="735" r="270" fill="url(#orb)" opacity=".65"/>
+<path d="M-20 674Q210 520 427 705T890 655" fill="none" stroke="#ffffff" stroke-opacity=".12" stroke-width="48"/>
+<rect x="30" y="30" width="780" height="800" rx="46" stroke="#ffffff" stroke-opacity=".28" stroke-width="2" fill="none"/>
+<g transform="translate(30 50)">
+    <rect x="40" y="40" width="700" height="590" rx="42" fill="#f7fbfc" opacity=".24" stroke="#fff" stroke-opacity=".7" stroke-width="4"/>
+    <path d="M55 430H738" stroke="#f6fff9" stroke-opacity=".4" stroke-width="5"/>
+    <rect x="130" y="105" width="280" height="244" rx="23" fill="#d3ede8" opacity=".75" />
+    <path d="M270 105V349M130 225H410" stroke="#f7ffff" stroke-width="9" opacity=".72"/>
+    <rect x="350" y="395" width="260" height="95" rx="47" fill="#d9eceb"/>
+    <rect x="330" y="340" width="120" height="150" rx="35" fill="#e8f4ef" stroke="#8497ad" stroke-width="9"/>
+    <rect x="555" y="405" width="70" height="180" rx="15" fill="#d9e1ed"/>
+    <path d="M375 490L300 600M574 490L630 600" stroke="#e7eef4" stroke-width="17" stroke-linecap="round"/>
+    <path d="M540 215v110M540 215l115-52" stroke="#dcecf0" stroke-width="19" stroke-linecap="round"/>
+    <ellipse cx="665" cy="161" rx="65" ry="24" transform="rotate(-19 665 161)" fill="#f5f9ff" stroke="#8d98b2" stroke-width="7"/>
+    <rect x="108" y="474" width="46" height="115" rx="12" fill="#ebeef4"/>
+    <path d="M110 470Q65 420 78 375M134 479Q191 419 164 360" stroke="#b4e4d2" stroke-width="16" stroke-linecap="round" fill="none"/>
+    <path d="M75 418q-80-80 15-90M158 416q50-100 73-58" stroke="#9bd8c4" stroke-width="13" stroke-linecap="round" fill="none"/>
+   </g>
+<text x="72" y="766" font-family="Arial,sans-serif" fill="#ffffff" font-size="18" font-weight="700" letter-spacing="6" opacity=".83">DENTAL SPACE</text>
+</svg>

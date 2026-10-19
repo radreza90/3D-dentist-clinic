@@ -82,9 +82,9 @@ export function HomeContactLocation() {
                     <span>خطوط تلفن مستقیم</span>
                   </div>
                   <div className="space-y-1 text-xs text-[#817C70] pr-6">
-                    <p>پذیرش اصلی: <a href="tel:02188880120" className="dir-ltr font-bold text-[#302A21] hover:text-[#625D45]">۰۲۱-۸۸۸۸۰۱۲۰</a></p>
-                    <p>مشاوره فوری: <a href="tel:02188880121" className="dir-ltr font-bold text-[#302A21] hover:text-[#625D45]">۰۲۱-۸۸۸۸۰۱۲۱</a></p>
-                    <p>پشتیبانی مراجعین: <span className="dir-ltr font-bold text-[#625D45]">۰۹۱۲-۰۰۰۰۰۰۰</span></p>
+                    <p>پذیرش اصلی: <a href="tel:02188880120" dir="ltr" className="font-sans font-bold text-[#302A21] hover:text-[#625D45] transition-colors" style={{ fontFamily: 'var(--font-vazirmatn), "Vazirmatn", sans-serif' }}>۰۲۱-۸۸۸۸۰۱۲۰</a></p>
+                    <p>مشاوره فوری: <a href="tel:02188880121" dir="ltr" className="font-sans font-bold text-[#302A21] hover:text-[#625D45] transition-colors" style={{ fontFamily: 'var(--font-vazirmatn), "Vazirmatn", sans-serif' }}>۰۲۱-۸۸۸۸۰۱۲۱</a></p>
+                    <p>پشتیبانی مراجعین: <span dir="ltr" className="font-sans font-bold text-[#625D45]" style={{ fontFamily: 'var(--font-vazirmatn), "Vazirmatn", sans-serif' }}>۰۹۱۲-۰۰۰۰۰۰۰</span></p>
                   </div>
                 </div>
 

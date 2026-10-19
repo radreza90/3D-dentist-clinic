@@ -7,6 +7,7 @@ const navigation = [
   { label: "داشبورد", href: "/admin", icon: "⌂" },
   { label: "نوبت‌ها", href: "/admin/appointments", icon: "▣" },
   { label: "دیدگاه‌ها", href: "/admin/comments", icon: "◉" },
+  { label: "رضایت مراجعین", href: "/admin/testimonials", icon: "★" },
   { label: "برنامه نوبت‌دهی", href: "/admin/schedules", icon: "◫" },
   { label: "خدمات", href: "/admin/content/services", icon: "✦" },
   { label: "پزشکان", href: "/admin/content/doctors", icon: "♙" },

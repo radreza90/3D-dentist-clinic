@@ -127,21 +127,36 @@ export function SiteFooter() {
           <div className="md:col-span-4 flex flex-col space-y-3 text-xs text-[#817C70]">
             <div className="flex items-center gap-3">
               <Phone className="w-4 h-4 text-[#A09B7C] shrink-0" />
-              <a href="tel:02112345678" className="hover:text-[#302A21] dir-ltr font-medium text-sm">
+              <a 
+                href="tel:02112345678" 
+                dir="ltr"
+                className="hover:text-[#302A21] font-sans font-medium text-sm tracking-wide transition-colors"
+                style={{ fontFamily: 'var(--font-vazirmatn), "Vazirmatn", sans-serif' }}
+              >
                 ۰۲۱-۱۲۳۴۵۶۷۸
               </a>
             </div>
 
             <div className="flex items-center gap-3">
               <Smartphone className="w-4 h-4 text-[#A09B7C] shrink-0" />
-              <a href="tel:09123456789" className="hover:text-[#302A21] dir-ltr font-medium text-sm">
+              <a 
+                href="tel:09123456789" 
+                dir="ltr"
+                className="hover:text-[#302A21] font-sans font-medium text-sm tracking-wide transition-colors"
+                style={{ fontFamily: 'var(--font-vazirmatn), "Vazirmatn", sans-serif' }}
+              >
                 ۰۹۱۲۳۴۵۶۷۸۹
               </a>
             </div>
 
             <div className="flex items-center gap-3">
               <Mail className="w-4 h-4 text-[#A09B7C] shrink-0" />
-              <a href="mailto:info@dentalclinic.ir" className="hover:text-[#302A21] dir-ltr font-mono">
+              <a 
+                href="mailto:info@dentalclinic.ir" 
+                dir="ltr"
+                className="hover:text-[#302A21] font-sans text-xs tracking-wide transition-colors"
+                style={{ fontFamily: 'var(--font-vazirmatn), "Vazirmatn", sans-serif' }}
+              >
                 info@dentalclinic.ir
               </a>
             </div>

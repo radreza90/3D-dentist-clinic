@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -11,23 +11,74 @@ import {
   Stethoscope
 } from "lucide-react";
 
-export function HomeBookingWidget() {
+type HomeBookingWidgetProps = {
+  services?: Array<{
+    _id: string;
+    slug: string;
+    title: { fa?: string; en?: string } | string;
+    duration?: string;
+    warranty?: string;
+    note?: string;
+  }>;
+};
+
+export function HomeBookingWidget({ services }: HomeBookingWidgetProps) {
   const router = useRouter();
 
-  const servicesList = [
-    { id: "implant", title: "ایمپلنت و کاشت دندان", duration: "۴۵ دقیقه", note: "جراحی دیجیتال" },
-    { id: "laminate", title: "طراحی لبخند و لمینت", duration: "۶۰ دقیقه", note: "سرامیک E-max" },
-    { id: "composite", title: "کامپوزیت ونیر نچرال", duration: "۴۵ دقیقه", note: "بدون تراش" },
-    { id: "root-canal", title: "درمان ریشه (عصب‌کشی)", duration: "۶۰ دقیقه", note: "روتاری میکروسکوپی" },
-    { id: "checkup", title: "معاینه و اسکن سه‌بعدی", duration: "۳۰ دقیقه", note: "مشاوره اختصاصی" },
-    { id: "bleaching", title: "سفید کردن (بلیچینگ)", duration: "۴۵ دقیقه", note: "آفیس لیزر" },
-  ];
+  const [servicesList, setServicesList] = useState<Array<{
+    id: string;
+    title: string;
+    duration: string;
+    note: string;
+  }>>(() => {
+    if (services && services.length > 0) {
+      return services.map(s => ({
+        id: s._id,
+        title: typeof s.title === "string" ? s.title : (s.title?.fa || s.title?.en || s.slug),
+        duration: s.duration || "۱ جلسه",
+        note: s.warranty || "پذیرش دیجیتال",
+      }));
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (services && services.length > 0) {
+      const mapped = services.map(s => ({
+        id: s._id,
+        title: typeof s.title === "string" ? s.title : (s.title?.fa || s.title?.en || s.slug),
+        duration: s.duration || "۱ جلسه",
+        note: s.warranty || "پذیرش دیجیتال",
+      }));
+      setServicesList(mapped);
+      setSelectedService(prev => prev || mapped[0]?.id || "");
+      return;
+    }
+
+    fetch("/api/v1/services", { cache: "no-store" })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+          const mapped = res.data.map((s: any) => ({
+            id: s._id,
+            title: typeof s.title === "string" ? s.title : (s.title?.fa || s.title?.en || s.slug),
+            duration: s.duration || "۱ جلسه",
+            note: s.warranty || "پذیرش دیجیتال",
+          }));
+          setServicesList(mapped);
+          setSelectedService(prev => prev || mapped[0]?.id || "");
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching services for HomeBookingWidget:", err);
+      });
+  }, [services]);
 
   const doctorsList = [
     { id: "any", name: "اولین نوبت خالی با هر پزشک متخصص", spec: "سریع‌ترین زمان ممکن پذیرش" },
-    { id: "dr-ahmadi", name: "دکتر مریم احمدی", spec: "متخصص دندانپزشکی ترمیمی و زیبایی" },
-    { id: "dr-rezaei", name: "دکتر علی رضایی", spec: "جراح فک و صورت و فلوشیپ ایمپلنت" },
-    { id: "dr-pirouz", name: "دکتر کاوه پیروز", spec: "متخصص درمان ریشه (اندودنتیست)" },
+    { id: "dr-ahmadi", name: "دکتر علیرضا مرادی", spec: "متخصص جراحی لثه و ایمپلنتولوژی" },
+    { id: "dr-rezaei", name: "دکتر مریم افشار", spec: "متخصص دندانپزشکی ترمیمی و زیبایی" },
+    { id: "dr-pirouz", name: "دکتر فرهاد کمالی", spec: "متخصص درمان ریشه (اندودنتیست)" },
   ];
 
   const timeSlots = [
@@ -37,12 +88,17 @@ export function HomeBookingWidget() {
     { id: "next-day", label: "دو روز بعد - نوبت عصر (۱۵:۰۰ الی ۱۸:۳۰)" },
   ];
 
-  const [selectedService, setSelectedService] = useState(servicesList[0].id);
+  const [selectedService, setSelectedService] = useState(servicesList[0]?.id || "");
   const [selectedDoctor, setSelectedDoctor] = useState(doctorsList[0].id);
   const [selectedTime, setSelectedTime] = useState(timeSlots[1].id);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const selectedServiceObj = servicesList.find(s => s.id === selectedService) || servicesList[0];
+  const selectedServiceObj = servicesList.find(s => s.id === selectedService) || servicesList[0] || {
+    id: "",
+    title: "خدمت دندانپزشکی",
+    duration: "۱ جلسه",
+    note: "پذیرش دیجیتال"
+  };
   const selectedDoctorObj = doctorsList.find(d => d.id === selectedDoctor) || doctorsList[0];
   const selectedTimeObj = timeSlots.find(t => t.id === selectedTime) || timeSlots[0];
 

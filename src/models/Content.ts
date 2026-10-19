@@ -76,4 +76,20 @@ const GalleryItem=new Schema({
 GalleryItem.index({groupId:1,position:1,createdAt:-1});
 GalleryItem.index({mediaType:1,isPublished:1,position:1});
 
-export const DoctorModel=models.Doctor||model("Doctor",Doctor); export const ServiceModel=models.Service||model("Service",Service); export const PageModel=models.Page||model("Page",Page); export const BlogCategoryModel=models.BlogCategory||model("BlogCategory",BlogCategory); export const BlogPostModel=models.BlogPost||model("BlogPost",BlogPost); export const PortfolioCategoryModel=models.PortfolioCategory||model("PortfolioCategory",PortfolioCategory); export const PortfolioItemModel=models.PortfolioItem||model("PortfolioItem",PortfolioItem); export const ContentRevisionModel=models.ContentRevision||model("ContentRevision",ContentRevision); export const CredentialGroupModel=models.CredentialGroup||model("CredentialGroup",CredentialGroup); export const CredentialItemModel=models.CredentialItem||model("CredentialItem",CredentialItem); export const GalleryGroupModel=models.GalleryGroup||model("GalleryGroup",GalleryGroup); export const GalleryItemModel=models.GalleryItem||model("GalleryItem",GalleryItem); export const CommentModel=models.Comment||model("Comment",Comment);
+const Testimonial = new Schema({
+  patientName: { type: localizedStringSchema, required: true },
+  treatment: localizedStringSchema,
+  comment: localizedTextSchema,
+  rating: { type: Number, min: 1, max: 5, default: 5 },
+  videoUrl: { type: String, default: "" },
+  coverImageUrl: { type: String, default: "" },
+  photoMediaId: { type: Schema.Types.ObjectId, ref: "Media" },
+  videoMediaId: { type: Schema.Types.ObjectId, ref: "Media" },
+  status: contentStatus,
+  sortOrder: { type: Number, default: 0 },
+  featured: { type: Boolean, default: false },
+  ...auditFields
+}, { timestamps: true });
+Testimonial.index({ status: 1, sortOrder: 1, createdAt: -1 });
+
+export const DoctorModel=models.Doctor||model("Doctor",Doctor); export const ServiceModel=models.Service||model("Service",Service); export const PageModel=models.Page||model("Page",Page); export const BlogCategoryModel=models.BlogCategory||model("BlogCategory",BlogCategory); export const BlogPostModel=models.BlogPost||model("BlogPost",BlogPost); export const PortfolioCategoryModel=models.PortfolioCategory||model("PortfolioCategory",PortfolioCategory); export const PortfolioItemModel=models.PortfolioItem||model("PortfolioItem",PortfolioItem); export const ContentRevisionModel=models.ContentRevision||model("ContentRevision",ContentRevision); export const CredentialGroupModel=models.CredentialGroup||model("CredentialGroup",CredentialGroup); export const CredentialItemModel=models.CredentialItem||model("CredentialItem",CredentialItem); export const GalleryGroupModel=models.GalleryGroup||model("GalleryGroup",GalleryGroup); export const GalleryItemModel=models.GalleryItem||model("GalleryItem",GalleryItem); export const CommentModel=models.Comment||model("Comment",Comment); export const TestimonialModel=models.Testimonial||model("Testimonial",Testimonial);
