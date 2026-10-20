@@ -1,8 +1,27 @@
 import { connectDB } from "@/lib/db";
-import { AppointmentModel, ServiceModel } from "@/models";
+import { AppointmentModel, ScheduleExceptionModel, ScheduleModel, ServiceModel, SiteSettingsModel } from "@/models";
 import { ok, fail } from "@/lib/api";
 import { can, getAuth } from "@/lib/rbac";
 import { normalizeIranianMobile } from "@/lib/phone";
+import { weekdayForDate } from "@/lib/timezone";
+
+function localDateParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+
+  return {
+    date: `${values.year}-${values.month}-${values.day}`,
+    minute: Number(values.hour) * 60 + Number(values.minute),
+  };
+}
 
 export async function GET(req: Request) {
   try {
@@ -58,11 +77,13 @@ export async function POST(req: Request) {
       return fail("خدمت انتخاب شده معتبر نیست یا غیرفعال شده است", 404);
     }
 
-    // Determine appointment start and end times
     let startsAt: Date;
     let endsAt: Date;
 
-    if (body.startsAt && body.endsAt) {
+    if (body.startsAt !== undefined || body.endsAt !== undefined) {
+      if (typeof body.startsAt !== "string" || typeof body.endsAt !== "string") {
+        return fail("زمان شروع و پایان نوبت معتبر نیست", 422);
+      }
       startsAt = new Date(body.startsAt);
       endsAt = new Date(body.endsAt);
     } else {
@@ -72,12 +93,59 @@ export async function POST(req: Request) {
       endsAt = new Date(startsAt.getTime() + 30 * 60 * 1000);
     }
 
-    const slotKey = `${startsAt.toISOString().split("T")[0]}_${startsAt.getUTCHours()}:${startsAt.getUTCMinutes()}_${serviceId}_${phone.slice(-4)}`;
+    const duration = endsAt.getTime() - startsAt.getTime();
+    if (
+      Number.isNaN(startsAt.getTime()) ||
+      Number.isNaN(endsAt.getTime()) ||
+      startsAt.getTime() <= Date.now() ||
+      duration < 5 * 60 * 1000 ||
+      duration > 4 * 60 * 60 * 1000
+    ) {
+      return fail("زمان نوبت معتبر نیست یا گذشته است", 422);
+    }
 
-    // Assign doctor if selected by patient, otherwise null for admin triage
-    const doctorIdToAssign = body.doctorId && body.doctorId !== "any" && /^[a-f\d]{24}$/i.test(String(body.doctorId))
-      ? String(body.doctorId)
-      : null;
+    let timezone = "Asia/Tehran";
+    if (body.startsAt !== undefined) {
+      const settings = await SiteSettingsModel.findOne({ key: "main" }).select("timezone").lean();
+      timezone = settings?.timezone || process.env.CLINIC_TIMEZONE || timezone;
+      const local = localDateParts(startsAt, timezone);
+      const weekday = weekdayForDate(local.date, timezone);
+      const exception = await ScheduleExceptionModel.findOne({ date: local.date, doctorId: null }).lean();
+      if (exception?.closed) {
+        return fail("کلینیک در این تاریخ تعطیل است", 409);
+      }
+
+      let schedules = await ScheduleModel.find({ active: true, dayOfWeek: weekday, doctorId: null }).lean();
+      if (!schedules.length) {
+        schedules = await ScheduleModel.find({ active: true, dayOfWeek: weekday }).lean();
+      }
+      if (!schedules.length) {
+        schedules = [{ startMinutes: 540, endMinutes: 1020, slotDuration: 30 }];
+      }
+
+      const appointmentMinutes = duration / 60000;
+      const matchesSchedule = startsAt.getUTCSeconds() === 0 &&
+        startsAt.getUTCMilliseconds() === 0 &&
+        schedules.some(schedule =>
+          local.minute >= schedule.startMinutes &&
+          local.minute + appointmentMinutes <= schedule.endMinutes &&
+          (local.minute - schedule.startMinutes) % schedule.slotDuration === 0 &&
+          appointmentMinutes === schedule.slotDuration
+        );
+      if (!matchesSchedule) {
+        return fail("زمان انتخاب‌شده در برنامه نوبت‌دهی کلینیک نیست", 409);
+      }
+    }
+
+    const slotKey = startsAt.toISOString();
+    const occupied = await AppointmentModel.exists({
+      startsAt: { $lt: endsAt },
+      endsAt: { $gt: startsAt },
+      status: { $in: ["pending_payment", "paid_pending_assignment", "confirmed"] },
+    });
+    if (occupied) {
+      return fail("این زمان نوبت پیش‌تر رزرو شده است", 409);
+    }
 
     const appointment = await AppointmentModel.create({
       patientSnapshot: {
@@ -85,10 +153,10 @@ export async function POST(req: Request) {
         phone,
       },
       serviceId: service._id,
-      doctorId: doctorIdToAssign,
+      doctorId: null,
       startsAt,
       endsAt,
-      timezone: "Asia/Tehran",
+      timezone,
       slotKey,
       customerNote: note,
       status: "paid_pending_assignment",
@@ -104,6 +172,9 @@ export async function POST(req: Request) {
       message: "درخواست رزرو نوبت شما با موفقیت ثبت شد و پس از بررسی و هماهنگی پزشک توسط پذیرش کلینیک با شما تماس گرفته خواهد شد.",
     }, 201);
   } catch (e) {
+    if (typeof e === "object" && e !== null && "code" in e && (e as { code?: number }).code === 11000) {
+      return fail("این زمان نوبت پیش‌تر رزرو شده است", 409);
+    }
     return fail(e instanceof Error ? e.message : "خطا در ثبت نوبت", 500);
   }
 }

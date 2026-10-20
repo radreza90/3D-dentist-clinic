@@ -46,7 +46,7 @@ export default async function HomePage() {
       TestimonialModel.find({ status: "published" }).sort({ sortOrder: 1, createdAt: -1 }).limit(20).lean().catch(() => []),
     ]);
 
-    services = rawServices.length > 0 ? rawServices : await ServiceModel.find().limit(12).lean().catch(() => []);
+    services = rawServices;
     doctors = rawDoctors.length > 0 ? rawDoctors : await DoctorModel.find().limit(6).lean().catch(() => []);
     posts = rawPosts;
     portfolioItems = rawPortfolioItems;
@@ -194,7 +194,7 @@ export default async function HomePage() {
       <SampleDoctors doctors={formattedDoctors} />
 
       {/* ۸. رزرو نوبت آنلاین دقیقاً مانند کانتینر /home2 متصل به پایگاه داده */}
-      <HomeBookingWidget services={formattedServices} doctors={formattedDoctors} />
+      <HomeBookingWidget services={formattedServices} />
 
       {/* ۹. وبلاگ (Blog Journal) */}
       <SampleBlog posts={formattedPosts} />

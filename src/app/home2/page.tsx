@@ -95,7 +95,7 @@ export default async function Home2Page() {
       <HomeTechnology />
 
       {/* ۳. ویجت نوبت‌دهی آنلاین اختصاصی کلینیک */}
-      <HomeBookingWidget services={formattedServices} doctors={formattedDoctors} />
+      <HomeBookingWidget services={formattedServices} />
 
       {/* ۴. بخش خدمات تخصصی با گرید آیکونی */}
       <HomeServices services={formattedServices} />

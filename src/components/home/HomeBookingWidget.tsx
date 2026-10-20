@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
+import { PersianDatePicker } from "@/components/admin/PersianDatePicker";
 import { 
   CalendarCheck, 
   Clock, 
   ArrowLeft, 
   Check, 
-  Stethoscope,
   User,
   Phone,
   FileText,
@@ -26,23 +24,32 @@ export type FormattedService = {
   category?: string;
 };
 
-export type FormattedDoctor = {
-  _id: string;
-  slug: string;
-  name: { fa?: string; en?: string } | string;
-  specialty?: string;
-  medicalCode?: string;
-  clinicDays?: string;
-  image?: string;
-};
-
 type HomeBookingWidgetProps = {
   services?: FormattedService[];
-  doctors?: FormattedDoctor[];
 };
 
-export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWidgetProps) {
-  const router = useRouter();
+type AvailabilitySlot = {
+  start: string;
+  end: string;
+  label: string;
+  available: boolean;
+};
+
+function getClinicToday() {
+  const todayParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const dateParts = Object.fromEntries(todayParts.map(part => [part.type, part.value]));
+  const year = Number(dateParts.year);
+  const month = Number(dateParts.month);
+  const day = Number(dateParts.day);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function HomeBookingWidget({ services = [] }: HomeBookingWidgetProps) {
 
   const [servicesList, setServicesList] = useState<Array<{
     id: string;
@@ -63,38 +70,15 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
     return [];
   });
 
-  const [doctorsList, setDoctorsList] = useState<Array<{
-    id: string;
-    slug: string;
-    name: string;
-    spec: string;
-    image?: string;
-  }>>(() => {
-    if (doctors && doctors.length > 0) {
-      return doctors.map(d => ({
-        id: d._id,
-        slug: d.slug,
-        name: typeof d.name === "string" ? d.name : (d.name?.fa || d.name?.en || d.slug),
-        spec: d.specialty || "متخصص دندانپزشکی",
-        image: d.image,
-      }));
-    }
-    return [];
-  });
-
   const [loadingServices, setLoadingServices] = useState<boolean>(services.length === 0);
-  const [loadingDoctors, setLoadingDoctors] = useState<boolean>(doctors.length === 0);
-
-  const timeSlots = [
-    { id: "today-pm", label: "امروز - نوبت عصر (۱۶:۰۰ الی ۱۸:۰۰)", rawTime: "16:00", daysOffset: 0 },
-    { id: "tomorrow-am", label: "فردا - نوبت صبح (۱۰:۰۰ الی ۱۲:۳۰)", rawTime: "10:00", daysOffset: 1 },
-    { id: "tomorrow-pm", label: "فردا - نوبت عصر (۱۶:۳۰ الی ۱۹:۰۰)", rawTime: "16:30", daysOffset: 1 },
-    { id: "next-day", label: "دو روز بعد - نوبت عصر (۱۵:۰۰ الی ۱۸:۳۰)", rawTime: "15:00", daysOffset: 2 },
-  ];
+  const [servicesError, setServicesError] = useState("");
 
   const [selectedService, setSelectedService] = useState<string>("");
-  const [selectedDoctor, setSelectedDoctor] = useState<string>("any");
-  const [selectedTime, setSelectedTime] = useState<string>(timeSlots[1].id);
+  const [selectedDate, setSelectedDate] = useState<string>(getClinicToday);
+  const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   // Form inputs for direct booking into database
@@ -110,7 +94,6 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
     message: string;
   } | null>(null);
 
-  // Fetch services from DB if not passed or empty
   useEffect(() => {
     if (services && services.length > 0) {
       const mapped = services.map(s => ({
@@ -121,90 +104,101 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
         note: s.warranty || "پذیرش دیجیتال",
       }));
       setServicesList(mapped);
-      setSelectedService(prev => prev || mapped[0]?.id || "");
       setLoadingServices(false);
       return;
     }
 
     setLoadingServices(true);
+    setServicesError("");
     fetch("/api/v1/services", { cache: "no-store" })
-      .then(r => r.json())
-      .then(res => {
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const mapped = res.data.map((s: { _id: string; slug: string; title: { fa?: string; en?: string } | string; duration?: string; warranty?: string }) => ({
-            id: s._id,
-            slug: s.slug,
-            title: typeof s.title === "string" ? s.title : (s.title?.fa || s.title?.en || s.slug),
-            duration: s.duration || "۱ جلسه",
-            note: s.warranty || "پذیرش دیجیتال",
-          }));
-          setServicesList(mapped);
-          setSelectedService(prev => prev || mapped[0]?.id || "");
+      .then(async r => {
+        const res = await r.json();
+        if (!r.ok || !res.success) {
+          throw new Error(res.error?.message || "دریافت خدمات از پایگاه داده ناموفق بود.");
         }
+        return res;
+      })
+      .then(res => {
+        const mapped = (res.data || []).map((s: { _id: string; slug: string; title: { fa?: string; en?: string } | string; duration?: string; warranty?: string }) => ({
+          id: s._id,
+          slug: s.slug,
+          title: typeof s.title === "string" ? s.title : (s.title?.fa || s.title?.en || s.slug),
+          duration: s.duration || "۱ جلسه",
+          note: s.warranty || "پذیرش دیجیتال",
+        }));
+        setServicesList(mapped);
       })
       .catch(err => {
         console.error("Error fetching services for HomeBookingWidget:", err);
+        setServicesError(err instanceof Error ? err.message : "خطا در دریافت خدمات از پایگاه داده.");
       })
       .finally(() => setLoadingServices(false));
   }, [services]);
 
-  // Fetch doctors from DB if not passed or empty
   useEffect(() => {
-    if (doctors && doctors.length > 0) {
-      const mapped = doctors.map(d => ({
-        id: d._id,
-        slug: d.slug,
-        name: typeof d.name === "string" ? d.name : (d.name?.fa || d.name?.en || d.slug),
-        spec: d.specialty || "متخصص دندانپزشکی",
-        image: d.image,
-      }));
-      setDoctorsList(mapped);
-      setLoadingDoctors(false);
+    if (!selectedService || !selectedDate) {
+      setAvailableSlots([]);
+      setSelectedSlot(null);
       return;
     }
 
-    setLoadingDoctors(true);
-    fetch("/api/v1/doctors", { cache: "no-store" })
-      .then(r => r.json())
-      .then(res => {
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const mapped = res.data.map((d: { _id: string; slug: string; name: { fa?: string; en?: string } | string; specialty?: string; image?: string }) => ({
-            id: d._id,
-            slug: d.slug,
-            name: typeof d.name === "string" ? d.name : (d.name?.fa || d.name?.en || d.slug),
-            spec: d.specialty || "متخصص دندانپزشکی",
-            image: d.image,
-          }));
-          setDoctorsList(mapped);
+    let isCurrent = true;
+    setLoadingAvailability(true);
+    setAvailabilityError("");
+    setAvailableSlots([]);
+    setSelectedSlot(null);
+    const query = new URLSearchParams({ date: selectedDate, serviceId: selectedService });
+
+    fetch(`/api/v1/booking/availability?${query.toString()}`, { cache: "no-store" })
+      .then(async response => {
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error?.message || "دریافت زمان‌های آزاد ناموفق بود.");
+        }
+        return result;
+      })
+      .then(result => {
+        if (isCurrent) setAvailableSlots((result.data?.slots || []) as AvailabilitySlot[]);
+      })
+      .catch(error => {
+        if (isCurrent) {
+          setAvailabilityError(error instanceof Error ? error.message : "خطا در دریافت زمان‌های آزاد.");
         }
       })
-      .catch(err => {
-        console.error("Error fetching doctors for HomeBookingWidget:", err);
-      })
-      .finally(() => setLoadingDoctors(false));
-  }, [doctors]);
+      .finally(() => {
+        if (isCurrent) setLoadingAvailability(false);
+      });
 
-  const allDoctorOptions = [
-    { id: "any", slug: "any", name: "اولین نوبت خالی با هر پزشک متخصص", spec: "سریع‌ترین زمان ممکن پذیرش", image: undefined },
-    ...doctorsList,
-  ];
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedService, selectedDate]);
 
-  const selectedServiceObj = servicesList.find(s => s.id === selectedService) || servicesList[0] || {
+  const selectedServiceObj = servicesList.find(s => s.id === selectedService) || {
     id: "",
     slug: "",
     title: "خدمت دندانپزشکی",
     duration: "۱ جلسه",
     note: "پذیرش دیجیتال"
   };
-
-  const selectedDoctorObj = allDoctorOptions.find(d => d.id === selectedDoctor) || allDoctorOptions[0];
-  const selectedTimeObj = timeSlots.find(t => t.id === selectedTime) || timeSlots[0];
+  const selectedDateLabel = selectedDate
+    ? new Intl.DateTimeFormat("fa-IR", {
+        timeZone: "UTC",
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(`${selectedDate}T12:00:00Z`))
+    : "";
 
   // Direct database appointment submission
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedServiceObj.id) {
       setSubmitError("لطفاً ابتدا خدمت مورد نظر را انتخاب فرمایید.");
+      return;
+    }
+    if (!selectedSlot) {
+      setSubmitError("لطفاً زمان نوبت را انتخاب فرمایید.");
       return;
     }
     if (!patientName.trim() || patientName.trim().length < 3) {
@@ -220,20 +214,15 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
     setSubmitError("");
 
     try {
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + (selectedTimeObj.daysOffset || 0));
-      const dateString = targetDate.toISOString().split("T")[0];
-
       const res = await fetch("/api/v1/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId: selectedServiceObj.id,
-          doctorId: selectedDoctor !== "any" ? selectedDoctor : null,
           name: patientName.trim(),
           phone: patientPhone.trim(),
-          date: dateString,
-          time: selectedTimeObj.rawTime || "10:00",
+          startsAt: selectedSlot.start,
+          endsAt: selectedSlot.end,
           note: patientNote.trim(),
         }),
       });
@@ -254,15 +243,12 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
   const handleResetBooking = () => {
     setBookingSuccess(null);
     setCurrentStep(1);
+    setSelectedService("");
+    setSelectedSlot(null);
     setPatientName("");
     setPatientPhone("");
     setPatientNote("");
     setSubmitError("");
-  };
-
-  const handleProceedToBookingPage = () => {
-    const sParam = selectedServiceObj.slug || selectedServiceObj.id;
-    router.push(`/booking?service=${encodeURIComponent(sParam)}&doctor=${encodeURIComponent(selectedDoctor)}`);
   };
 
   return (
@@ -295,15 +281,15 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
           </h2>
 
           <p className="text-base text-[#817C70] leading-relaxed text-pretty">
-            در ۳ گام ساده درمان مدنظر خود را برگزینید، پزشک و زمان ایده‌آل را مشخص کنید و پیامک تاییدیه دریافت نمایید.
+            ابتدا خدمت موردنظر و سپس یکی از زمان‌های آزاد را انتخاب کنید؛ پزشک پس از ثبت درخواست توسط مدیر پذیرش تعیین می‌شود.
           </p>
         </div>
 
         {/* Wizard Main Seamless Surface */}
         <div className="max-w-4xl mx-auto rounded-3xl bg-[#FCFAF6] p-7 sm:p-10 shadow-[0_20px_50px_rgba(48,42,33,0.04)] border border-[#E8E2D5]/50">
           
-          {/* Step Indicator Header (Clean Unboxed Numbers) */}
-          <div className="grid grid-cols-3 gap-4 pb-8 border-b border-[#E8E2D5]/40 text-center">
+          {/* Step Indicator Header */}
+          <div className="grid grid-cols-2 gap-4 pb-8 border-b border-[#E8E2D5]/40 text-center">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
@@ -324,7 +310,7 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
             <button
               type="button"
               onClick={() => {
-                if (selectedService || servicesList.length > 0) setCurrentStep(2);
+                if (selectedService) setCurrentStep(2);
               }}
               className="flex flex-col sm:flex-row items-center justify-center gap-2 transition-colors cursor-pointer group"
             >
@@ -336,26 +322,7 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
               <span className={`text-xs sm:text-sm font-semibold ${
                 currentStep === 2 ? "text-[#302A21]" : "text-[#817C70]"
               }`}>
-                پزشک معالج
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedService || servicesList.length > 0) setCurrentStep(3);
-              }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-2 transition-colors cursor-pointer group"
-            >
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                currentStep >= 3 ? "bg-[#A09B7C] text-white" : "bg-[#F7F4EE] text-[#817C70]"
-              }`}>
-                ۳
-              </span>
-              <span className={`text-xs sm:text-sm font-semibold ${
-                currentStep === 3 ? "text-[#302A21]" : "text-[#817C70]"
-              }`}>
-                زمان و تایید نهایی
+                انتخاب زمان و ثبت نوبت
               </span>
             </button>
           </div>
@@ -381,9 +348,9 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                 <div className="text-xs font-semibold text-[#817C70]">اطلاعات رزرو ثبت شده در دیتابیس:</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-[#302A21]">
                   <div>خدمت انتخابی: <strong className="text-[#625D45]">{bookingSuccess.serviceTitle || selectedServiceObj.title}</strong></div>
-                  <div>پزشک معالج: <strong className="text-[#625D45]">{selectedDoctorObj.name}</strong></div>
+                  <div>پزشک معالج: <strong className="text-[#625D45]">پس از ثبت، توسط مدیر پذیرش تعیین می‌شود</strong></div>
                   <div>کد پیگیری نوبت: <strong className="text-[#625D45]">{String(bookingSuccess.appointmentId).slice(-6).toUpperCase()}</strong></div>
-                  <div>زمان نوبت: <strong>{selectedTimeObj.label}</strong></div>
+                  <div>زمان نوبت: <strong>{selectedDateLabel}، {selectedSlot?.label}</strong></div>
                   <div>بیمار: <strong>{patientName} ({patientPhone})</strong></div>
                   <div>وضعیت: <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">در انتظار بررسی پذیرش</span></div>
                 </div>
@@ -429,25 +396,31 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                       </div>
                     ) : servicesList.length === 0 ? (
                       <div className="text-center py-8 p-6 rounded-2xl bg-[#F7F4EE] space-y-3">
-                        <p className="text-xs sm:text-sm text-[#756F62]">در حال ارتباط با پایگاه داده کلینیک...</p>
+                        <p className="text-xs sm:text-sm text-[#756F62]">
+                          {servicesError || "در حال حاضر خدمتی برای رزرو در پایگاه داده ثبت نشده است."}
+                        </p>
                         <button
                           type="button"
                           onClick={() => {
                             setLoadingServices(true);
+                            setServicesError("");
                             fetch("/api/v1/services", { cache: "no-store" })
-                              .then(r => r.json())
-                              .then(res => {
-                                if (res.success && Array.isArray(res.data)) {
-                                  const mapped = res.data.map((s: { _id: string; slug: string; title: { fa?: string; en?: string } | string; duration?: string; warranty?: string }) => ({
-                                    id: s._id,
-                                    slug: s.slug,
-                                    title: typeof s.title === "string" ? s.title : (s.title?.fa || s.title?.en || s.slug),
-                                    duration: s.duration || "۱ جلسه",
-                                    note: s.warranty || "پذیرش دیجیتال",
-                                  }));
-                                  setServicesList(mapped);
-                                  setSelectedService(mapped[0]?.id || "");
+                              .then(async response => {
+                                const result = await response.json();
+                                if (!response.ok || !result.success) {
+                                  throw new Error(result.error?.message || "دریافت خدمات ناموفق بود.");
                                 }
+                                const mapped = (result.data || []).map((s: { _id: string; slug: string; title: { fa?: string; en?: string } | string; duration?: string; warranty?: string }) => ({
+                                  id: s._id,
+                                  slug: s.slug,
+                                  title: typeof s.title === "string" ? s.title : (s.title?.fa || s.title?.en || s.slug),
+                                  duration: s.duration || "۱ جلسه",
+                                  note: s.warranty || "پذیرش دیجیتال",
+                                }));
+                                setServicesList(mapped);
+                              })
+                              .catch(error => {
+                                setServicesError(error instanceof Error ? error.message : "خطا در دریافت خدمات.");
                               })
                               .finally(() => setLoadingServices(false));
                           }}
@@ -459,14 +432,17 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {servicesList.map(srv => {
-                          const isSelected = (selectedService === srv.id) || (!selectedService && srv.id === servicesList[0]?.id);
+                          const isSelected = selectedService === srv.id;
                           return (
-                            <div
+                            <button
+                              type="button"
                               key={srv.id}
                               onClick={() => {
                                 setSelectedService(srv.id);
+                                setSelectedSlot(null);
                                 setSubmitError("");
                               }}
+                              aria-pressed={isSelected}
                               className={`p-5 rounded-2xl cursor-pointer transition-all duration-200 text-right flex flex-col justify-between ${
                                 isSelected
                                   ? "bg-[#A09B7C]/15 shadow-sm border border-[#A09B7C]/30"
@@ -488,7 +464,7 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                                   <span>{srv.duration}</span>
                                 </p>
                               </div>
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
@@ -497,22 +473,18 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                     <div className="flex justify-end pt-4">
                       <button
                         type="button"
-                        onClick={() => {
-                          if (!selectedService && servicesList.length > 0) {
-                            setSelectedService(servicesList[0].id);
-                          }
-                          setCurrentStep(2);
-                        }}
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold text-white bg-[#A09B7C] hover:bg-[#7F795D] transition-colors cursor-pointer shadow-xs"
+                        disabled={!selectedService || loadingServices}
+                        onClick={() => setCurrentStep(2)}
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold text-white bg-[#A09B7C] hover:bg-[#7F795D] disabled:opacity-50 transition-colors cursor-pointer shadow-xs"
                       >
-                        <span>ادامه: انتخاب پزشک معالج</span>
+                        <span>ادامه: انتخاب زمان نوبت</span>
                         <ArrowLeft className="w-4 h-4" />
                       </button>
                     </div>
                   </motion.div>
                 )}
 
-                {/* STEP 2: DOCTOR SELECTION FROM DATABASE */}
+                {/* STEP 2: TIME SELECTION & BOOKING */}
                 {currentStep === 2 && (
                   <motion.div
                     key="step2"
@@ -523,26 +495,48 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                     className="space-y-6"
                   >
                     <div className="text-right">
-                      <h3 className="text-lg font-bold text-[#302A21]">مرحله دوم: پزشک متخصص مورد نظر</h3>
-                      <p className="text-xs text-[#817C70] mt-1">
-                        امکان انتخاب اولین زمان خالی عمومی یا رزرو با هر یک از پزشکان ثبت‌شده در پایگاه‌داده کلینیک
-                      </p>
+                      <h3 className="text-lg font-bold text-[#302A21]">مرحله دوم: انتخاب زمان نوبت</h3>
+                      <p className="text-xs text-[#817C70] mt-1">زمان‌های آزاد از برنامه کلینیک دریافت می‌شوند؛ پزشک پس از ثبت درخواست توسط مدیر پذیرش تعیین خواهد شد.</p>
                     </div>
 
-                    {loadingDoctors ? (
+                    <div className="text-right">
+                      <PersianDatePicker
+                        mode="date"
+                        id="booking-date"
+                        label="روز مراجعه"
+                        value={selectedDate}
+                        onChange={date => setSelectedDate(date)}
+                        clearable={false}
+                      />
+                    </div>
+
+                    {loadingAvailability ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {[1, 2, 3, 4].map(i => (
-                          <div key={i} className="p-5 rounded-2xl bg-[#F7F4EE] animate-pulse h-20" />
+                        {[1, 2, 3, 4].map(index => (
+                          <div key={index} className="p-5 rounded-2xl bg-[#F7F4EE] animate-pulse h-16" />
                         ))}
+                      </div>
+                    ) : availabilityError ? (
+                      <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs text-right">
+                        {availabilityError}
+                      </div>
+                    ) : availableSlots.filter(slot => slot.available).length === 0 ? (
+                      <div className="p-4 rounded-xl bg-[#F7F4EE] text-[#756F62] text-xs text-right">
+                        برای این روز زمان آزادی وجود ندارد؛ لطفاً روز دیگری را انتخاب کنید.
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {allDoctorOptions.map(doc => {
-                          const isSelected = selectedDoctor === doc.id;
+                        {availableSlots.filter(slot => slot.available).map(slot => {
+                          const isSelected = selectedSlot?.start === slot.start;
                           return (
-                            <div
-                              key={doc.id}
-                              onClick={() => setSelectedDoctor(doc.id)}
+                            <button
+                              type="button"
+                              key={slot.start}
+                              onClick={() => {
+                                setSelectedSlot(slot);
+                                setSubmitError("");
+                              }}
+                              aria-pressed={isSelected}
                               className={`p-5 rounded-2xl cursor-pointer transition-all duration-200 text-right flex items-center justify-between gap-4 ${
                                 isSelected
                                   ? "bg-[#A09B7C]/15 shadow-sm border border-[#A09B7C]/30"
@@ -550,99 +544,19 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                               }`}
                             >
                               <div className="flex items-center gap-3">
-                                {doc.image ? (
-                                  <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 border border-[#E8E2D5]">
-                                    <Image
-                                      src={doc.image}
-                                      alt={doc.name}
-                                      fill
-                                      className="object-cover"
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-11 h-11 rounded-xl bg-[#A09B7C]/20 flex items-center justify-center text-[#625D45] shrink-0">
-                                    <Stethoscope className="w-5 h-5 text-[#A09B7C]" />
-                                  </div>
-                                )}
-                                <div>
-                                  <h4 className="font-bold text-sm text-[#302A21]">{doc.name}</h4>
-                                  <p className="text-xs text-[#817C70] mt-0.5">{doc.spec}</p>
-                                </div>
+                                <Clock className="w-4 h-4 text-[#A09B7C]" />
+                                <span className="text-sm font-semibold text-[#302A21]">{slot.label}</span>
                               </div>
                               <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
                                 isSelected ? "bg-[#A09B7C] text-white" : "bg-[#E8E2D5]/60 text-transparent"
                               }`}>
                                 <Check className="w-3 h-3 stroke-[3]" />
                               </div>
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
                     )}
-
-                    <div className="flex items-center justify-between pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(1)}
-                        className="px-5 py-2.5 rounded-full text-xs font-medium text-[#817C70] hover:text-[#302A21] transition-colors cursor-pointer"
-                      >
-                        مرحله قبل
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(3)}
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold text-white bg-[#A09B7C] hover:bg-[#7F795D] transition-colors cursor-pointer shadow-xs"
-                      >
-                        <span>ادامه: انتخاب بازه زمانی</span>
-                        <ArrowLeft className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* STEP 3: TIME SELECTION & FINAL PERSISTENCE TO DATABASE */}
-                {currentStep === 3 && (
-                  <motion.div
-                    key="step3"
-                    initial={{ opacity: 0, x: 15 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -15 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-6"
-                  >
-                    <div className="text-right">
-                      <h3 className="text-lg font-bold text-[#302A21]">مرحله سوم: بازه زمانی پیشنهادی و ثبت نوبت</h3>
-                      <p className="text-xs text-[#817C70] mt-1">مشخصات نوبت شما با اولویت VIP در دیتابیس ثبت خواهد شد.</p>
-                    </div>
-
-                    {/* Time Slots Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {timeSlots.map(ts => {
-                        const isSelected = selectedTime === ts.id;
-                        return (
-                          <div
-                            key={ts.id}
-                            onClick={() => setSelectedTime(ts.id)}
-                            className={`p-5 rounded-2xl cursor-pointer transition-all duration-200 text-right flex items-center justify-between gap-4 ${
-                              isSelected
-                                ? "bg-[#A09B7C]/15 shadow-sm border border-[#A09B7C]/30"
-                                : "bg-[#F7F4EE]/70 hover:bg-[#F7F4EE] border border-transparent"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Clock className="w-4 h-4 text-[#A09B7C]" />
-                              <span className="text-sm font-semibold text-[#302A21]">{ts.label}</span>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                              isSelected ? "bg-[#A09B7C] text-white" : "bg-[#E8E2D5]/60 text-transparent"
-                            }`}>
-                              <Check className="w-3 h-3 stroke-[3]" />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
 
                     {/* Summary of Selection */}
                     <div className="p-6 rounded-2xl bg-[#F7F4EE] space-y-2 text-right border border-[#E8E2D5]/60">
@@ -650,15 +564,15 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-medium text-[#302A21]">
                         <span>خدمت: <strong className="text-[#625D45]">{selectedServiceObj.title}</strong></span>
                         <span className="text-[#C2BFA9]">·</span>
-                        <span>پزشک: <strong className="text-[#625D45]">{selectedDoctorObj.name}</strong></span>
+                        <span>تاریخ: <strong className="text-[#625D45]">{selectedDateLabel || "—"}</strong></span>
                         <span className="text-[#C2BFA9]">·</span>
-                        <span>زمان: <strong className="text-[#625D45]">{selectedTimeObj.label}</strong></span>
+                        <span>زمان: <strong className="text-[#625D45]">{selectedSlot?.label || "انتخاب نشده"}</strong></span>
                       </div>
                     </div>
 
                     {/* Direct Booking Form Fields (Persistent Database Saving) */}
                     <form onSubmit={handleSubmitBooking} className="p-6 rounded-2xl bg-[#FCFAF6] border border-[#E8E2D5] space-y-4 text-right">
-                      <div className="text-xs font-bold text-[#302A21]">مشخصات مراجعه‌کننده جهت ثبت در پایگاه داده:</div>
+                      <div className="text-xs font-bold text-[#302A21]">مشخصات مراجعه‌کننده برای ثبت درخواست:</div>
                       
                       {submitError && (
                         <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
@@ -716,7 +630,7 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-3 border-t border-[#E8E2D5]/50">
                         <button
                           type="button"
-                          onClick={() => setCurrentStep(2)}
+                          onClick={() => setCurrentStep(1)}
                           className="px-5 py-2.5 rounded-full text-xs font-medium text-[#817C70] hover:text-[#302A21] transition-colors cursor-pointer"
                         >
                           مرحله قبل
@@ -724,16 +638,8 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
 
                         <div className="flex flex-wrap items-center gap-3">
                           <button
-                            type="button"
-                            onClick={handleProceedToBookingPage}
-                            className="px-4 py-3 rounded-full text-xs font-semibold text-[#625D45] hover:bg-[#F7F4EE] transition-colors cursor-pointer"
-                          >
-                            انتقال به درگاه تفصیلی نوبت‌دهی
-                          </button>
-
-                          <button
                             type="submit"
-                            disabled={submitting}
+                            disabled={submitting || !selectedSlot || loadingAvailability}
                             className="inline-flex items-center gap-2 px-7 py-3 rounded-full text-xs sm:text-sm font-semibold text-white bg-[#A09B7C] hover:bg-[#7F795D] disabled:opacity-50 transition-colors cursor-pointer shadow-[0_6px_20px_rgba(160,155,124,0.3)]"
                           >
                             {submitting ? (
@@ -744,7 +650,7 @@ export function HomeBookingWidget({ services = [], doctors = [] }: HomeBookingWi
                             ) : (
                               <>
                                 <CalendarCheck className="w-4 h-4" />
-                                <span>ثبت قطعی نوبت در سامانه کلینیک</span>
+                                <span>ثبت درخواست نوبت</span>
                               </>
                             )}
                           </button>

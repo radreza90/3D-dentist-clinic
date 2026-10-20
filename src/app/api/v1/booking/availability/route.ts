@@ -54,8 +54,11 @@ export async function GET(req:Request){
     const appointments=await AppointmentModel.find({
       startsAt:{$gte:dayStart,$lt:nextDay},
       status:{$in:["pending_payment","paid_pending_assignment","confirmed"]},
-    }).select("slotKey startsAt").lean();
-    const booked=new Set(appointments.map(item=>item.slotKey));
+    }).select("slotKey startsAt endsAt").lean();
+    const booked=new Set(appointments.flatMap(item=>[
+      item.slotKey,
+      item.startsAt instanceof Date ? item.startsAt.toISOString() : new Date(item.startsAt).toISOString(),
+    ]));
 
     const now=Date.now();
     const seen=new Set<string>();
@@ -70,7 +73,11 @@ export async function GET(req:Request){
         const slotKey=start.toISOString();
         if(seen.has(slotKey))continue;
         seen.add(slotKey);
-        const available=start.getTime()>now&&!booked.has(slotKey);
+        const overlapsAppointment=appointments.some(item=>
+          new Date(item.startsAt).getTime()<end.getTime()&&
+          new Date(item.endsAt).getTime()>start.getTime()
+        );
+        const available=start.getTime()>now&&!booked.has(slotKey)&&!overlapsAppointment;
         slots.push({start:start.toISOString(),end:end.toISOString(),label:startTime+" - "+endTime,available});
       }
     }
